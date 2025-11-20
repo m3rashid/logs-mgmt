@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"logs-mgmt/server/controllers"
 	"net/http"
+	"os"
 
 	"github.com/joho/godotenv"
 )
@@ -14,22 +16,25 @@ func main() {
 		fmt.Println("Error loading .env file", err)
 	}
 
-	port := ":8080"
-	log.Printf("✓ Server starting on http://localhost%s\n", port)
-	log.Fatal(http.ListenAndServe(port, enableCORS(http.DefaultServeMux)))
-}
+	apiRouter := http.NewServeMux()
 
-func enableCORS(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	apiRouter.HandleFunc("GET /api/v1/aircrafts", http.HandlerFunc(controllers.GetAircrafts))
+	apiRouter.HandleFunc("GET /api/v1/aircrafts/:id", http.HandlerFunc(controllers.GetSingleAircraft))
+	apiRouter.HandleFunc("POST /api/v1/aircrafts", http.HandlerFunc(controllers.CreateAircraft))
 
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
+	apiRouter.HandleFunc("GET /api/v1/flights", http.HandlerFunc(controllers.GetFlights))
+	apiRouter.HandleFunc("GET /api/v1/flights/:id", http.HandlerFunc(controllers.GetSingleFlight))
+	apiRouter.HandleFunc("POST /api/v1/flights", http.HandlerFunc(controllers.CreateFlight))
+	apiRouter.HandleFunc("PUT /api/v1/flights/:id", http.HandlerFunc(controllers.UpdateFlight))
 
-		next.ServeHTTP(w, r)
-	})
+	apiRouter.HandleFunc("GET /api/v1/flights/:id/realtime", http.HandlerFunc(controllers.FlightDetailsRealtime))
+
+	PORT := "0.0.0.0:" + os.Getenv("PORT")
+	server := http.Server{
+		Addr:    PORT,
+		Handler: controllers.MiddlewareStack(apiRouter),
+	}
+
+	log.Printf("Server is running at http://localhost%s", PORT)
+	server.ListenAndServe()
 }

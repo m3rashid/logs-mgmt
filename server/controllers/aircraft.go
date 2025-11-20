@@ -1,0 +1,84 @@
+package controllers
+
+import (
+	"encoding/json"
+	"log"
+	"logs-mgmt/db"
+	"logs-mgmt/server/utils"
+	"net/http"
+
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
+func GetAircrafts(w http.ResponseWriter, r *http.Request) {
+	paginationRes := utils.PaginationResponse[db.Aircraft]{}
+	if err := paginationRes.ParseQuery(r, 50); err != nil {
+		http.Error(w, "Incorrect Parameters", http.StatusBadRequest)
+		return
+	}
+
+	pgConn, err := db.GetPostgresDB()
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	queries := db.New(pgConn)
+	aircrafts, err := queries.GetAircrafts(r.Context(), db.GetAircraftsParams{
+		Limit:  paginationRes.Limit + 1,
+		Offset: (paginationRes.CurrentPage - 1) * paginationRes.Limit,
+	})
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	paginationRes.Docs = aircrafts
+	paginationRes.BuildPaginationResponse()
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(utils.ToJson(paginationRes))
+}
+
+func GetSingleAircraft(w http.ResponseWriter, r *http.Request) {
+}
+
+func CreateAircraft(w http.ResponseWriter, r *http.Request) {
+	body := createAircraftBody{}
+	if err := utils.ParseBodyAndValidate(w, r, &body); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	pgConn, err := db.GetPostgresDB()
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	queries := db.New(pgConn)
+
+	aircraftId, err := queries.CreateAircraft(r.Context(), db.CreateAircraftParams{
+		Name:                body.Name,
+		Model:               body.Model,
+		SerialNumber:        body.SerialNumber,
+		BatteryHealth:       body.BatteryHealth,
+		Status:              body.Status,
+		LastMaintenanceDate: pgtype.Timestamp{Time: body.LastMaintenanceDate, Valid: true},
+		MaintenanceDueDate:  pgtype.Timestamp{Time: body.MaintenanceDueDate, Valid: true},
+	})
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+
+	err = json.NewEncoder(w).Encode(map[string]interface{}{"id": aircraftId})
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	log.Println("Aircraft created successfully", aircraftId)
+}

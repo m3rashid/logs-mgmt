@@ -94,6 +94,109 @@ func (q *Queries) CreateFlight(ctx context.Context, arg CreateFlightParams) (int
 	return id, err
 }
 
+const getAircraft = `-- name: GetAircraft :one
+SELECT id, name, model, serial_number, battery_health, status, last_maintenance_date, maintenance_due_date, created_at, updated_at FROM aircrafts WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetAircraft(ctx context.Context, id int32) (Aircraft, error) {
+	row := q.db.QueryRow(ctx, getAircraft, id)
+	var i Aircraft
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Model,
+		&i.SerialNumber,
+		&i.BatteryHealth,
+		&i.Status,
+		&i.LastMaintenanceDate,
+		&i.MaintenanceDueDate,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getAircrafts = `-- name: GetAircrafts :many
+SELECT id, name, model, serial_number, battery_health, status, last_maintenance_date, maintenance_due_date, created_at, updated_at FROM aircrafts ORDER BY id DESC LIMIT $1 OFFSET $2
+`
+
+type GetAircraftsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) GetAircrafts(ctx context.Context, arg GetAircraftsParams) ([]Aircraft, error) {
+	rows, err := q.db.Query(ctx, getAircrafts, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Aircraft
+	for rows.Next() {
+		var i Aircraft
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Model,
+			&i.SerialNumber,
+			&i.BatteryHealth,
+			&i.Status,
+			&i.LastMaintenanceDate,
+			&i.MaintenanceDueDate,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getFlights = `-- name: GetFlights :many
+SELECT id, aircraft_id, source_lat, source_lon, destination_lat, destination_lon, start_time, end_time, current_location_lat, current_location_lon, status FROM flights ORDER BY id DESC LIMIT $1 OFFSET $2
+`
+
+type GetFlightsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) GetFlights(ctx context.Context, arg GetFlightsParams) ([]Flight, error) {
+	rows, err := q.db.Query(ctx, getFlights, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Flight
+	for rows.Next() {
+		var i Flight
+		if err := rows.Scan(
+			&i.ID,
+			&i.AircraftID,
+			&i.SourceLat,
+			&i.SourceLon,
+			&i.DestinationLat,
+			&i.DestinationLon,
+			&i.StartTime,
+			&i.EndTime,
+			&i.CurrentLocationLat,
+			&i.CurrentLocationLon,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getRunningFlights = `-- name: GetRunningFlights :many
 SELECT id, aircraft_id FROM flights WHERE status = $1
 `

@@ -15,6 +15,15 @@ INSERT INTO aircrafts (
 	maintenance_due_date
 ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;
 
+-- name: GetAircrafts :many
+SELECT * FROM aircrafts ORDER BY id DESC LIMIT $1 OFFSET $2;
+
+-- name: GetAircraft :one
+SELECT * FROM aircrafts WHERE id = $1 LIMIT 1;
+
+-- name: GetFlights :many
+SELECT * FROM flights ORDER BY id DESC LIMIT $1 OFFSET $2;
+
 -- name: CreateFlight :one
 INSERT INTO flights (
 	aircraft_id,
