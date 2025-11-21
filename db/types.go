@@ -3,6 +3,8 @@ package db
 import (
 	"encoding/json"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type AircraftStatus int
@@ -35,12 +37,12 @@ const (
 )
 
 type SystemInfo struct {
-	CPU     float64 `json:"cpu"`
-	Memory  float64 `json:"memory"`
-	Disk    float64 `json:"disk"`
-	Network float64 `json:"network"`
-	Battery float64 `json:"battery"`
-	Uptime  float64 `json:"uptime"`
+	CPU     float64 `json:"cpu" bson:"cpu"`
+	Memory  float64 `json:"memory" bson:"mem"`
+	Disk    float64 `json:"disk" bson:"disk"`
+	Network float64 `json:"network" bson:"net"`
+	Battery float64 `json:"battery" bson:"bat"`
+	Uptime  float64 `json:"uptime" bson:"up"`
 }
 
 type FlightEventData struct {
@@ -51,13 +53,13 @@ type FlightEventData struct {
 }
 
 type FlightEvent struct {
-	ID         string          `json:"id" bson:"_id"`
-	FlightID   int32           `json:"flight_id" bson:"flight_id"`
-	AircraftID int32           `json:"aircraft_id" bson:"aircraft_id"`
-	Timestamp  time.Time       `json:"time" bson:"time"`
-	LogLevel   LogLevel        `json:"level" bson:"level"`
-	EventData  FlightEventData `json:"data" bson:"data"`
-	SystemInfo SystemInfo      `json:"sys_info" bson:"sys_info"`
+	ID         primitive.ObjectID `json:"id" bson:"_id"`
+	FlightID   int32              `json:"flight_id" bson:"flight_id"`
+	AircraftID int32              `json:"aircraft_id" bson:"aircraft_id"`
+	Timestamp  time.Time          `json:"time" bson:"time"`
+	LogLevel   LogLevel           `json:"level" bson:"level"`
+	EventData  FlightEventData    `json:"data" bson:"evt"`
+	SystemInfo SystemInfo         `json:"sys_info" bson:"sys"`
 }
 
 func (e *FlightEvent) ToByteArray() []byte {
@@ -74,5 +76,6 @@ func ToFlightEvent(jsonBytes []byte) (*FlightEvent, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &e, nil
 }

@@ -11,6 +11,8 @@ import (
 
 var mongoDb *mongo.Database
 
+const FLIGHT_EVENTS_COLLECTION = "flight_events"
+
 func GetMongoDB() (*mongo.Database, error) {
 	if mongoDb == nil {
 		_db, err := getMongoDbConnection()
@@ -30,8 +32,7 @@ func getMongoDbConnection() (*mongo.Database, error) {
 		return nil, errors.New("MONGO_URL or MONGO_DATABASE_NAME is not set")
 	}
 
-	loggerOptions := options.Logger().SetComponentLevel(options.LogComponentCommand, options.LogLevelDebug)
-	clientOptions := options.Client().ApplyURI(mongoUrl).SetLoggerOptions(loggerOptions)
+	clientOptions := options.Client().ApplyURI(mongoUrl)
 
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {

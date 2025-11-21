@@ -68,7 +68,7 @@ func CreateSeedData(ctx context.Context, count int) error {
 
 	fmt.Println("Seeding database...")
 
-	// create 10 aircrafts with random data
+	// create count number of aircrafts with random data
 	for range count {
 		aircraftId, err := queries.CreateAircraft(ctx, CreateAircraftParams{
 			Name:                gofakeit.Name(),
@@ -83,7 +83,7 @@ func CreateSeedData(ctx context.Context, count int) error {
 			return err
 		}
 
-		randomNumber := rand.Intn(10000)
+		randomNumber := rand.Intn(100)
 		if randomNumber%2 == 0 { // 50% chance to create a flight for the aircraft
 			_, err := queries.CreateFlight(ctx, CreateFlightParams{
 				AircraftID:         aircraftId,

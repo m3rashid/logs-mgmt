@@ -56,7 +56,7 @@ func main() {
 
 	if *seed {
 		ctx := context.Background()
-		err := db.CreateSeedData(ctx, 100)
+		err := db.CreateSeedData(ctx, 500)
 		if err != nil {
 			fmt.Printf("Failed to seed database: %s\n", err)
 			os.Exit(1)

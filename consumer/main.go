@@ -63,13 +63,8 @@ func main() {
 					e.TopicPartition.Partition,
 					e.TopicPartition.Offset,
 					string(e.Value))
-				processMessage(e)
 
-				// Optionally, commit the offset manually after processing the message
-				// _, err := consumer.CommitMessage(e)
-				// if err != nil {
-				// 	fmt.Printf("Error committing offset: %v\n", err)
-				// }
+				processMessage(e)
 
 			case kafka.Error:
 				// Errors are informational and may not be fatal

@@ -28,8 +28,8 @@ func (broker *Broker) listen() {
 	}
 }
 
-func NewBroker() (broker *Broker) {
-	broker = &Broker{
+func NewBroker() *Broker {
+	broker := &Broker{
 		Notifier:       make(chan []byte, 1),
 		newClients:     make(chan chan []byte),
 		closingClients: make(chan chan []byte),
@@ -38,5 +38,5 @@ func NewBroker() (broker *Broker) {
 
 	go broker.listen()
 
-	return
+	return broker
 }
