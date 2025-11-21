@@ -27,15 +27,13 @@ type DbSeeded struct {
 }
 
 type Flight struct {
-	ID                 int32            `json:"id"`
-	AircraftID         int32            `json:"aircraft_id"`
-	SourceLat          float32          `json:"source_lat"`
-	SourceLon          float32          `json:"source_lon"`
-	DestinationLat     float32          `json:"destination_lat"`
-	DestinationLon     float32          `json:"destination_lon"`
-	StartTime          pgtype.Timestamp `json:"start_time"`
-	EndTime            pgtype.Timestamp `json:"end_time"`
-	CurrentLocationLat float32          `json:"current_location_lat"`
-	CurrentLocationLon float32          `json:"current_location_lon"`
-	Status             FlightStatus     `json:"status"`
+	ID             int32            `json:"id"`
+	AircraftID     int32            `json:"aircraft_id"`
+	SourceLat      float32          `json:"source_lat"`
+	SourceLon      float32          `json:"source_lon"`
+	DestinationLat float32          `json:"destination_lat"`
+	DestinationLon float32          `json:"destination_lon"`
+	StartTime      pgtype.Timestamp `json:"start_time"`
+	EndTime        pgtype.Timestamp `json:"end_time"`
+	Status         FlightStatus     `json:"status"`
 }

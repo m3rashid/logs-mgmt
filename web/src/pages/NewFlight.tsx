@@ -1,17 +1,15 @@
 import { createSignal } from 'solid-js'
 import { useNavigate } from '@solidjs/router'
-import { createQuery, useMutation, useQueryClient } from '@tanstack/solid-query'
 import { Layout } from '../components/Layout'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { Select } from '../components/Select'
-import { createFlight } from '../api/flights'
-import { getAircrafts } from '../api/aircrafts'
+import { useAircraftsQuery } from '../api/aircrafts'
+import { useCreateFlightMutation } from '../api/flights'
 import type { CreateFlightInput } from '../api/types'
 
 export function NewFlight() {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
 
   const [formData, setFormData] = createSignal<CreateFlightInput>({
     aircraft_id: 0,
@@ -25,21 +23,12 @@ export function NewFlight() {
 
   const [errors, setErrors] = createSignal<Partial<Record<keyof CreateFlightInput, string>>>({})
 
-  const aircraftsQuery = createQuery(() => ({
-    queryKey: ['aircrafts', 1],
-    queryFn: () => getAircrafts({ page: 1, limit: 100 }),
-  }))
+  const aircraftsQuery = useAircraftsQuery(() => ({ page: 1, limit: 100 }))
 
-  const createMutation = useMutation(() => ({
-    mutationFn: createFlight,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['flights'] })
-      navigate('/')
-    },
-    onError: (error: Error) => {
-      alert('Failed to create flight: ' + error.message)
-    },
-  }))
+  const createMutation = useCreateFlightMutation({
+    onSuccess: () => navigate('/'),
+    onError: (error: Error) => alert('Failed to create flight: ' + error.message),
+  })
 
   const handleSubmit = (e: Event) => {
     e.preventDefault()
@@ -82,7 +71,7 @@ export function NewFlight() {
             error={errors().aircraft_id}
             placeholder='Select an aircraft'
             options={
-              aircraftsQuery.data?.data.map((aircraft) => ({
+              aircraftsQuery.data?.docs.map((aircraft) => ({
                 value: aircraft.id.toString(),
                 label: `${aircraft.name} - ${aircraft.model} (${aircraft.serial_number})`,
               })) || []

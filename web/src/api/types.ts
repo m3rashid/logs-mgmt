@@ -27,8 +27,6 @@ export type Flight = {
   destination_lon: number
   start_time: string
   end_time: string
-  current_location_lat: number
-  current_location_lon: number
   status: FlightStatus
 }
 
@@ -77,4 +75,18 @@ export type CreateFlightInput = {
   destination_lon: number
   start_time: string
   end_time: string
+}
+
+export type PaginationType = {
+  limit: number
+  count: number
+  page: number
+  hasNextPage: boolean
+  hasPreviousPage: boolean
+}
+export type PaginationResponse<T> = PaginationType & { docs: T[] }
+
+export type PaginationRequestParams = {
+  page?: number
+  limit?: number
 }

@@ -24,3 +24,8 @@ type createFlightBody struct {
 	StartTime      time.Time `json:"start_time" validate:"required"`
 	EndTime        time.Time `json:"end_time" validate:"required"`
 }
+
+type updateFlightBody struct {
+	Status  db.FlightStatus `json:"status"`
+	EndTime time.Time       `json:"end_time"`
+}

@@ -1,5 +1,5 @@
 import { Button } from './Button'
-import type { PaginationType } from '../api/base'
+import type { PaginationType } from '../api/types'
 
 type PaginationProps = {
   pagination: PaginationType

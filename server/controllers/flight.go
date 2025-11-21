@@ -39,7 +39,35 @@ func GetFlights(w http.ResponseWriter, r *http.Request) {
 	w.Write(utils.ToJson(paginationRes))
 }
 
-func GetSingleFlight(w http.ResponseWriter, r *http.Request) {}
+func GetSingleFlight(w http.ResponseWriter, r *http.Request) {
+	flightId := r.PathValue("flightId")
+	if flightId == "" {
+		http.Error(w, "Flight ID is required", http.StatusBadRequest)
+		return
+	}
+
+	id, err := utils.ParseInt32(flightId)
+	if err != nil {
+		http.Error(w, "Invalid flight ID", http.StatusBadRequest)
+		return
+	}
+
+	pgConn, err := db.GetPostgresDB()
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	queries := db.New(pgConn)
+	flight, err := queries.GetFlight(r.Context(), id)
+	if err != nil {
+		http.Error(w, "Flight not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(utils.ToJson(flight))
+}
 
 func CreateFlight(w http.ResponseWriter, r *http.Request) {
 	body := createFlightBody{}
@@ -63,6 +91,7 @@ func CreateFlight(w http.ResponseWriter, r *http.Request) {
 		DestinationLon: body.DestinationLon,
 		StartTime:      pgtype.Timestamp{Time: body.StartTime, Valid: true},
 		EndTime:        pgtype.Timestamp{Time: body.EndTime, Valid: true},
+		Status:         db.FlightStatusScheduled,
 	})
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -76,8 +105,44 @@ func CreateFlight(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-
-	w.Write(utils.ToJson(map[string]interface{}{"id": flightId}))
 }
 
-func UpdateFlight(w http.ResponseWriter, r *http.Request) {}
+func UpdateFlight(w http.ResponseWriter, r *http.Request) {
+	flightId := r.PathValue("flightId")
+	if flightId == "" {
+		http.Error(w, "Flight ID is required", http.StatusBadRequest)
+		return
+	}
+
+	id, err := utils.ParseInt32(flightId)
+	if err != nil {
+		http.Error(w, "Invalid flight ID", http.StatusBadRequest)
+		return
+	}
+
+	body := updateFlightBody{}
+	if err := utils.ParseBodyAndValidate(w, r, &body); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	pgConn, err := db.GetPostgresDB()
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	queries := db.New(pgConn)
+	flight, err := queries.UpdateFlight(r.Context(), db.UpdateFlightParams{
+		ID:      id,
+		Status:  body.Status,
+		EndTime: pgtype.Timestamp{Time: body.EndTime, Valid: true},
+	})
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(utils.ToJson(flight))
+}

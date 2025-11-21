@@ -87,16 +87,14 @@ func CreateSeedData(ctx context.Context, count int) error {
 
 		if rand.Float64() < FLIGHT_PROBABILITY { // FLIGHT_PROBABILITY chance to create a flight for the aircraft
 			_, err := queries.CreateFlight(ctx, CreateFlightParams{
-				AircraftID:         aircraftId,
-				SourceLat:          gofakeit.Float32(),
-				SourceLon:          gofakeit.Float32(),
-				DestinationLat:     gofakeit.Float32(),
-				DestinationLon:     gofakeit.Float32(),
-				StartTime:          pgtype.Timestamp{Time: time.Now(), Valid: true},
-				EndTime:            pgtype.Timestamp{Time: time.Now().Add(time.Hour * 24 * 30), Valid: true}, // 30 days from now
-				CurrentLocationLat: gofakeit.Float32(),
-				CurrentLocationLon: gofakeit.Float32(),
-				Status:             GetRandomFlightStatus(),
+				AircraftID:     aircraftId,
+				SourceLat:      gofakeit.Float32(),
+				SourceLon:      gofakeit.Float32(),
+				DestinationLat: gofakeit.Float32(),
+				DestinationLon: gofakeit.Float32(),
+				StartTime:      pgtype.Timestamp{Time: time.Now(), Valid: true},
+				EndTime:        pgtype.Timestamp{Time: time.Now().Add(time.Hour * 24 * 30), Valid: true}, // 30 days from now
+				Status:         GetRandomFlightStatus(),
 			})
 			if err != nil {
 				return err

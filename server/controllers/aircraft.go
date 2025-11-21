@@ -41,6 +41,33 @@ func GetAircrafts(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetSingleAircraft(w http.ResponseWriter, r *http.Request) {
+	aircraftId := r.PathValue("aircraftId")
+	if aircraftId == "" {
+		http.Error(w, "Aircraft ID is required", http.StatusBadRequest)
+		return
+	}
+
+	id, err := utils.ParseInt32(aircraftId)
+	if err != nil {
+		http.Error(w, "Invalid aircraft ID", http.StatusBadRequest)
+		return
+	}
+
+	pgConn, err := db.GetPostgresDB()
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	queries := db.New(pgConn)
+	aircraft, err := queries.GetAircraft(r.Context(), id)
+	if err != nil {
+		http.Error(w, "Aircraft not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(utils.ToJson(aircraft))
 }
 
 func CreateAircraft(w http.ResponseWriter, r *http.Request) {

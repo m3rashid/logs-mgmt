@@ -31,12 +31,3 @@ export async function apiClient<T = unknown>(endpoint: string, options?: ApiClie
 
   return !noJsonParse ? (res.json() as T) : null
 }
-
-export type PaginationType = {
-  limit: number
-  count: number
-  page: number
-  hasNextPage: boolean
-  hasPreviousPage: boolean
-}
-export type PaginationResponse<T> = PaginationType & { data: T[] }

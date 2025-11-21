@@ -1,8 +1,8 @@
-import { createSignal, onMount, onCleanup, Show } from 'solid-js'
+import { createSignal, onMount, onCleanup, Show, createMemo } from 'solid-js'
 import { useParams } from '@solidjs/router'
-import { useQuery } from '@tanstack/solid-query'
 import { Layout } from '../components/Layout'
-import { getFlight, getFlightRealtime } from '../api/flights'
+import { getFlightRealtime } from '../api/flights'
+import { useFlightQuery } from '../api/flights'
 import type { FlightEvent } from '../api/types'
 import { formatDate, formatCoordinates, getFlightStatusLabel, getAircraftStatusLabel } from '../lib/utils'
 
@@ -11,17 +11,16 @@ export function FlightDetail() {
   const [realtimeData, setRealtimeData] = createSignal<FlightEvent | null>(null)
   const [isConnected, setIsConnected] = createSignal(false)
 
-  const flightQuery = useQuery(() => ({
-    queryKey: ['flight', params.id],
-    enabled: !!params.id && !isNaN(parseInt(params.id)),
-    queryFn: () => getFlight(parseInt(params.id!)),
-  }))
+  const flightId = createMemo(() => {
+    if (!params.id) return undefined
+    const id = parseInt(params.id)
+    return isNaN(id) ? undefined : id
+  })
+
+  const flightQuery = useFlightQuery(flightId)
 
   onMount(() => {
-    const flightId = parseInt(params.id || '0')
-    if (isNaN(flightId)) return
-
-    const eventSource = getFlightRealtime(flightId)
+    const eventSource = getFlightRealtime()
 
     eventSource.onopen = () => {
       setIsConnected(true)
@@ -29,10 +28,11 @@ export function FlightDetail() {
 
     eventSource.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data) as FlightEvent
-        setRealtimeData(data)
-      } catch (error) {
-        console.error('Failed to parse realtime data:', error)
+        const data = JSON.parse(event.data) as FlightEvent[]
+        const flightEvent = data.find((e) => e.flight_id === flightId())
+        if (flightEvent) setRealtimeData(flightEvent)
+      } catch (err) {
+        console.error('Failed to parse realtime data:', err)
       }
     }
 
@@ -75,10 +75,6 @@ export function FlightDetail() {
                 <InfoItem
                   label='Destination'
                   value={formatCoordinates(flight().destination_lat, flight().destination_lon)}
-                />
-                <InfoItem
-                  label='Current Location'
-                  value={formatCoordinates(flight().current_location_lat, flight().current_location_lon)}
                 />
               </div>
             </div>

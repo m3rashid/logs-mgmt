@@ -20,23 +20,19 @@ INSERT INTO flights (
 	destination_lon,
 	start_time,
 	end_time,
-	current_location_lat,
-	current_location_lon,
 	status
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
 `
 
 type CreateFlightParams struct {
-	AircraftID         int32            `json:"aircraft_id"`
-	SourceLat          float32          `json:"source_lat"`
-	SourceLon          float32          `json:"source_lon"`
-	DestinationLat     float32          `json:"destination_lat"`
-	DestinationLon     float32          `json:"destination_lon"`
-	StartTime          pgtype.Timestamp `json:"start_time"`
-	EndTime            pgtype.Timestamp `json:"end_time"`
-	CurrentLocationLat float32          `json:"current_location_lat"`
-	CurrentLocationLon float32          `json:"current_location_lon"`
-	Status             FlightStatus     `json:"status"`
+	AircraftID     int32            `json:"aircraft_id"`
+	SourceLat      float32          `json:"source_lat"`
+	SourceLon      float32          `json:"source_lon"`
+	DestinationLat float32          `json:"destination_lat"`
+	DestinationLon float32          `json:"destination_lon"`
+	StartTime      pgtype.Timestamp `json:"start_time"`
+	EndTime        pgtype.Timestamp `json:"end_time"`
+	Status         FlightStatus     `json:"status"`
 }
 
 func (q *Queries) CreateFlight(ctx context.Context, arg CreateFlightParams) (int32, error) {
@@ -48,8 +44,6 @@ func (q *Queries) CreateFlight(ctx context.Context, arg CreateFlightParams) (int
 		arg.DestinationLon,
 		arg.StartTime,
 		arg.EndTime,
-		arg.CurrentLocationLat,
-		arg.CurrentLocationLon,
 		arg.Status,
 	)
 	var id int32
@@ -57,8 +51,29 @@ func (q *Queries) CreateFlight(ctx context.Context, arg CreateFlightParams) (int
 	return id, err
 }
 
+const getFlight = `-- name: GetFlight :one
+SELECT id, aircraft_id, source_lat, source_lon, destination_lat, destination_lon, start_time, end_time, status FROM flights WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetFlight(ctx context.Context, id int32) (Flight, error) {
+	row := q.db.QueryRow(ctx, getFlight, id)
+	var i Flight
+	err := row.Scan(
+		&i.ID,
+		&i.AircraftID,
+		&i.SourceLat,
+		&i.SourceLon,
+		&i.DestinationLat,
+		&i.DestinationLon,
+		&i.StartTime,
+		&i.EndTime,
+		&i.Status,
+	)
+	return i, err
+}
+
 const getFlights = `-- name: GetFlights :many
-SELECT id, aircraft_id, source_lat, source_lon, destination_lat, destination_lon, start_time, end_time, current_location_lat, current_location_lon, status FROM flights ORDER BY id DESC LIMIT $1 OFFSET $2
+SELECT id, aircraft_id, source_lat, source_lon, destination_lat, destination_lon, start_time, end_time, status FROM flights ORDER BY id DESC LIMIT $1 OFFSET $2
 `
 
 type GetFlightsParams struct {
@@ -84,8 +99,6 @@ func (q *Queries) GetFlights(ctx context.Context, arg GetFlightsParams) ([]Fligh
 			&i.DestinationLon,
 			&i.StartTime,
 			&i.EndTime,
-			&i.CurrentLocationLat,
-			&i.CurrentLocationLon,
 			&i.Status,
 		); err != nil {
 			return nil, err
@@ -125,4 +138,34 @@ func (q *Queries) GetRunningFlights(ctx context.Context, status FlightStatus) ([
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateFlight = `-- name: UpdateFlight :one
+UPDATE flights SET
+	status = COALESCE($2, status),
+	end_time = COALESCE($3, end_time)
+WHERE id = $1 RETURNING id, aircraft_id, source_lat, source_lon, destination_lat, destination_lon, start_time, end_time, status
+`
+
+type UpdateFlightParams struct {
+	ID      int32            `json:"id"`
+	Status  FlightStatus     `json:"status"`
+	EndTime pgtype.Timestamp `json:"end_time"`
+}
+
+func (q *Queries) UpdateFlight(ctx context.Context, arg UpdateFlightParams) (Flight, error) {
+	row := q.db.QueryRow(ctx, updateFlight, arg.ID, arg.Status, arg.EndTime)
+	var i Flight
+	err := row.Scan(
+		&i.ID,
+		&i.AircraftID,
+		&i.SourceLat,
+		&i.SourceLon,
+		&i.DestinationLat,
+		&i.DestinationLon,
+		&i.StartTime,
+		&i.EndTime,
+		&i.Status,
+	)
+	return i, err
 }

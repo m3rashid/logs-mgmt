@@ -2,19 +2,16 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"logs-mgmt/db"
 	"logs-mgmt/server/utils"
 	"net/http"
 	"time"
 
-	"log"
-
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 func getFlightDetailsRealtime() ([]byte, error) {
-	log.Println("Getting flight details realtime")
-
 	pgConn, err := db.GetPostgresDB()
 	if err != nil {
 		return nil, err
@@ -26,10 +23,16 @@ func getFlightDetailsRealtime() ([]byte, error) {
 		return nil, err
 	}
 
-	// get the realtime data for each flight
-	flightIds := []int32{}
+	flightIds := bson.A{}
 	for _, flight := range flights {
 		flightIds = append(flightIds, flight.ID)
+	}
+
+	getLatestFlightEventsAggregationPipeline := []bson.M{
+		{"$match": bson.M{"flight_id": bson.M{"$in": flightIds}}},
+		{"$sort": bson.M{"time": 1}},
+		{"$group": bson.M{"_id": "$flight_id", "event": bson.M{"$last": "$$ROOT"}}},
+		{"$replaceRoot": bson.M{"newRoot": "$event"}},
 	}
 
 	mongoConn, err := db.GetMongoDB()
@@ -37,29 +40,8 @@ func getFlightDetailsRealtime() ([]byte, error) {
 		return nil, err
 	}
 
-	collection := mongoConn.Collection(db.FLIGHT_EVENTS_COLLECTION)
-	getLatestFlightEventsAggregationPipeline := []bson.M{
-		{
-			"$match": bson.M{
-				"flight_id": bson.M{"$in": bson.A{flightIds}},
-			},
-		},
-		{
-			"$group": bson.M{
-				"_id":   "$flight_id",
-				"event": bson.M{"$last": "$$ROOT"},
-			},
-		},
-		{
-			"$project": bson.M{
-				"_id":   0,
-				"event": "$event",
-			},
-		},
-	}
-
 	ctx := context.Background()
-	cursor, err := collection.Aggregate(ctx, getLatestFlightEventsAggregationPipeline)
+	cursor, err := mongoConn.Collection(db.FLIGHT_EVENTS_COLLECTION).Aggregate(ctx, getLatestFlightEventsAggregationPipeline)
 	if err != nil {
 		return nil, err
 	}
@@ -70,9 +52,9 @@ func getFlightDetailsRealtime() ([]byte, error) {
 		return nil, err
 	}
 
-	eventBytes := []byte{}
-	for _, event := range events {
-		eventBytes = append(eventBytes, event.ToByteArray()...)
+	eventBytes, err := json.Marshal(events)
+	if err != nil {
+		return nil, err
 	}
 
 	return eventBytes, nil

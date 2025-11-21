@@ -20,13 +20,13 @@ func main() {
 
 	apiRouter.HandleFunc("GET /api/aircrafts", controllers.GetAircrafts)
 	apiRouter.HandleFunc("POST /api/aircrafts", controllers.CreateAircraft)
-	apiRouter.HandleFunc("GET /api/aircrafts/:aircraftId", controllers.GetSingleAircraft)
+	apiRouter.HandleFunc("GET /api/aircrafts/{aircraftId}", controllers.GetSingleAircraft)
 
 	apiRouter.HandleFunc("GET /api/flights", controllers.GetFlights)
 	apiRouter.HandleFunc("POST /api/flights", controllers.CreateFlight)
 	apiRouter.HandleFunc("GET /api/flights/realtime", controllers.FlightDetailsRealtime())
-	apiRouter.HandleFunc("PUT /api/flights/:flightId", controllers.UpdateFlight)
-	apiRouter.HandleFunc("GET /api/flights/:flightId", controllers.GetSingleFlight)
+	apiRouter.HandleFunc("PUT /api/flights/{flightId}", controllers.UpdateFlight)
+	apiRouter.HandleFunc("GET /api/flights/{flightId}", controllers.GetSingleFlight)
 
 	PORT := "0.0.0.0:" + os.Getenv("PORT")
 	server := http.Server{

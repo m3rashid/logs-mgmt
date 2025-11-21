@@ -1,16 +1,14 @@
 import { createSignal } from 'solid-js'
 import { useNavigate } from '@solidjs/router'
-import { useMutation, useQueryClient } from '@tanstack/solid-query'
 import { Layout } from '../components/Layout'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { Select } from '../components/Select'
-import { createAircraft } from '../api/aircrafts'
+import { useCreateAircraftMutation } from '../api/aircrafts'
 import type { CreateAircraftInput, AircraftStatus } from '../api/types'
 
 export function NewAircraft() {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
 
   const [formData, setFormData] = createSignal<CreateAircraftInput>({
     name: '',
@@ -22,16 +20,10 @@ export function NewAircraft() {
 
   const [errors, setErrors] = createSignal<Partial<Record<keyof CreateAircraftInput, string>>>({})
 
-  const createMutation = useMutation(() => ({
-    mutationFn: createAircraft,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['aircrafts'] })
-      navigate('/aircrafts')
-    },
-    onError: (error: Error) => {
-      alert('Failed to create aircraft: ' + error.message)
-    },
-  }))
+  const createMutation = useCreateAircraftMutation({
+    onSuccess: () => navigate('/aircrafts'),
+    onError: (error: Error) => alert('Failed to create aircraft: ' + error.message),
+  })
 
   const handleSubmit = (e: Event) => {
     e.preventDefault()

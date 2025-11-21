@@ -1,11 +1,10 @@
 import { createSignal, Show } from 'solid-js'
 import { useNavigate } from '@solidjs/router'
-import { createQuery } from '@tanstack/solid-query'
 import { Layout } from '../components/Layout'
 import { Table, type Column } from '../components/Table'
 import { Button } from '../components/Button'
 import { Pagination } from '../components/Pagination'
-import { getFlights } from '../api/flights'
+import { useFlightsQuery } from '../api/flights'
 import type { Flight, FlightStatus } from '../api/types'
 import { formatDate, formatCoordinates, getFlightStatusLabel } from '../lib/utils'
 
@@ -13,10 +12,7 @@ export function Flights() {
   const navigate = useNavigate()
   const [page, setPage] = createSignal(1)
 
-  const flightsQuery = createQuery(() => ({
-    queryKey: ['flights', page()],
-    queryFn: () => getFlights({ page: page(), limit: 15 }),
-  }))
+  const flightsQuery = useFlightsQuery(() => ({ page: page(), limit: 15 }))
 
   const columns: Column<Flight>[] = [
     { key: 'id', label: 'ID' },
@@ -57,7 +53,7 @@ export function Flights() {
 
         <Table
           columns={columns}
-          data={flightsQuery.data?.data || []}
+          data={flightsQuery.data?.docs || []}
           isLoading={flightsQuery.isLoading}
           onRowClick={(flight) => navigate(`/flights/${flight.id}`)}
           emptyMessage='No flights found'

@@ -20,8 +20,6 @@ CREATE TABLE IF NOT EXISTS flights (
     destination_lon REAL NOT NULL,
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP,
-    current_location_lat REAL NOT NULL,
-    current_location_lon REAL NOT NULL,
     status INTEGER NOT NULL,
     FOREIGN KEY (aircraft_id) REFERENCES aircrafts(id) ON DELETE CASCADE
 );

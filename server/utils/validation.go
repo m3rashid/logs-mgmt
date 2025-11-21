@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -74,4 +75,12 @@ func ParseBodyAndValidate[T any](w http.ResponseWriter, r *http.Request, validat
 	}
 
 	return ValidateData(validated)
+}
+
+func ParseInt32(s string) (int32, error) {
+	val, err := strconv.ParseInt(s, 10, 32)
+	if err != nil {
+		return 0, err
+	}
+	return int32(val), nil
 }

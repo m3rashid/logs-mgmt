@@ -1,11 +1,10 @@
 import { createSignal, Show } from 'solid-js'
 import { useNavigate } from '@solidjs/router'
-import { createQuery } from '@tanstack/solid-query'
 import { Layout } from '../components/Layout'
 import { Table, type Column } from '../components/Table'
 import { Button } from '../components/Button'
 import { Pagination } from '../components/Pagination'
-import { getAircrafts } from '../api/aircrafts'
+import { useAircraftsQuery } from '../api/aircrafts'
 import type { Aircraft, AircraftStatus } from '../api/types'
 import { formatDate, getAircraftStatusLabel } from '../lib/utils'
 
@@ -13,10 +12,7 @@ export function Aircrafts() {
   const navigate = useNavigate()
   const [page, setPage] = createSignal(1)
 
-  const aircraftsQuery = createQuery(() => ({
-    queryKey: ['aircrafts', page()],
-    queryFn: () => getAircrafts({ page: page(), limit: 15 }),
-  }))
+  const aircraftsQuery = useAircraftsQuery(() => ({ page: page(), limit: 15 }))
 
   const columns: Column<Aircraft>[] = [
     { key: 'id', label: 'ID' },
@@ -52,7 +48,7 @@ export function Aircrafts() {
 
         <Table
           columns={columns}
-          data={aircraftsQuery.data?.data || []}
+          data={aircraftsQuery.data?.docs || []}
           isLoading={aircraftsQuery.isLoading}
           emptyMessage='No aircrafts found'
         />
