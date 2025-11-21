@@ -81,5 +81,3 @@ func CreateFlight(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateFlight(w http.ResponseWriter, r *http.Request) {}
-
-func FlightDetailsRealtime(w http.ResponseWriter, r *http.Request) {}

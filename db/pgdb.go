@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"os"
 	"time"
 
@@ -74,7 +74,7 @@ func CreateSeedData(ctx context.Context, count int) error {
 			Name:                gofakeit.Name(),
 			Model:               gofakeit.CarModel(),
 			SerialNumber:        gofakeit.Person().CreditCard.Number,
-			BatteryHealth:       rand.Int31n(101),
+			BatteryHealth:       rand.Int32N(101),
 			Status:              GetRandomStatus(),
 			LastMaintenanceDate: pgtype.Timestamp{Time: time.Now(), Valid: true},
 			MaintenanceDueDate:  pgtype.Timestamp{Time: time.Now().Add(time.Hour * 24 * 30), Valid: true}, // 30 days from now
@@ -83,8 +83,9 @@ func CreateSeedData(ctx context.Context, count int) error {
 			return err
 		}
 
-		randomNumber := rand.Intn(100)
-		if randomNumber%2 == 0 { // 50% chance to create a flight for the aircraft
+		const FLIGHT_PROBABILITY = 0.25 // 25%
+
+		if rand.Float64() < FLIGHT_PROBABILITY { // FLIGHT_PROBABILITY chance to create a flight for the aircraft
 			_, err := queries.CreateFlight(ctx, CreateFlightParams{
 				AircraftID:         aircraftId,
 				SourceLat:          gofakeit.Float32(),

@@ -56,7 +56,7 @@ func main() {
 
 	if *seed {
 		ctx := context.Background()
-		err := db.CreateSeedData(ctx, 500)
+		err := db.CreateSeedData(ctx, 500) // create 500 aircrafts and some flights
 		if err != nil {
 			fmt.Printf("Failed to seed database: %s\n", err)
 			os.Exit(1)

@@ -18,16 +18,15 @@ func main() {
 
 	apiRouter := http.NewServeMux()
 
-	apiRouter.HandleFunc("GET /api/v1/aircrafts", http.HandlerFunc(controllers.GetAircrafts))
-	apiRouter.HandleFunc("GET /api/v1/aircrafts/:id", http.HandlerFunc(controllers.GetSingleAircraft))
-	apiRouter.HandleFunc("POST /api/v1/aircrafts", http.HandlerFunc(controllers.CreateAircraft))
+	apiRouter.HandleFunc("GET /api/aircrafts", controllers.GetAircrafts)
+	apiRouter.HandleFunc("POST /api/aircrafts", controllers.CreateAircraft)
+	apiRouter.HandleFunc("GET /api/aircrafts/:aircraftId", controllers.GetSingleAircraft)
 
-	apiRouter.HandleFunc("GET /api/v1/flights", http.HandlerFunc(controllers.GetFlights))
-	apiRouter.HandleFunc("GET /api/v1/flights/:id", http.HandlerFunc(controllers.GetSingleFlight))
-	apiRouter.HandleFunc("POST /api/v1/flights", http.HandlerFunc(controllers.CreateFlight))
-	apiRouter.HandleFunc("PUT /api/v1/flights/:id", http.HandlerFunc(controllers.UpdateFlight))
-
-	apiRouter.HandleFunc("GET /api/v1/flights/:id/realtime", http.HandlerFunc(controllers.FlightDetailsRealtime))
+	apiRouter.HandleFunc("GET /api/flights", controllers.GetFlights)
+	apiRouter.HandleFunc("POST /api/flights", controllers.CreateFlight)
+	apiRouter.HandleFunc("GET /api/flights/realtime", controllers.FlightDetailsRealtime())
+	apiRouter.HandleFunc("PUT /api/flights/:flightId", controllers.UpdateFlight)
+	apiRouter.HandleFunc("GET /api/flights/:flightId", controllers.GetSingleFlight)
 
 	PORT := "0.0.0.0:" + os.Getenv("PORT")
 	server := http.Server{

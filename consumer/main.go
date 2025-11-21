@@ -58,12 +58,7 @@ func main() {
 
 			switch e := ev.(type) {
 			case *kafka.Message:
-				fmt.Printf("Received message from topic %s [%d] at offset %v: %s\n",
-					*e.TopicPartition.Topic,
-					e.TopicPartition.Partition,
-					e.TopicPartition.Offset,
-					string(e.Value))
-
+				fmt.Printf("New message from topic %s [%d] at offset %v\n", *e.TopicPartition.Topic, e.TopicPartition.Partition, e.TopicPartition.Offset)
 				processMessage(e)
 
 			case kafka.Error:
