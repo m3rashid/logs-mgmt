@@ -60,7 +60,7 @@ func getFlightDetailsRealtime() ([]byte, error) {
 	return eventBytes, nil
 }
 
-func FlightDetailsRealtime() http.HandlerFunc {
+func FlightEventsRealtime() http.HandlerFunc {
 	flightDetailsStreamBroker := utils.NewStreamBroker()
 
 	timeInterval := 1 * time.Second

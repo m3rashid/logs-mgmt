@@ -20,7 +20,10 @@ export function FlightDetail() {
   const flightQuery = useFlightQuery(flightId)
 
   onMount(() => {
-    const eventSource = getFlightRealtime()
+    const id = flightId()
+    if (!id) return
+
+    const eventSource = getFlightRealtime(id)
 
     eventSource.onopen = () => {
       setIsConnected(true)

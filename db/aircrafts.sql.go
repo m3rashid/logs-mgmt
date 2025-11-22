@@ -71,16 +71,34 @@ func (q *Queries) GetAircraft(ctx context.Context, id int32) (Aircraft, error) {
 }
 
 const getAircrafts = `-- name: GetAircrafts :many
-SELECT id, name, model, serial_number, battery_health, status, last_maintenance_date, maintenance_due_date, created_at, updated_at FROM aircrafts ORDER BY id DESC LIMIT $1 OFFSET $2
+SELECT id, name, model, serial_number, battery_health, status, last_maintenance_date, maintenance_due_date, created_at, updated_at FROM aircrafts
+WHERE
+  ($3::text IS NULL OR status = $3)
+  AND ($4::text IS NULL OR model = $4)
+  AND ($5::text IS NULL OR serial_number = $5)
+  AND ($6::integer IS NULL OR battery_health >= $6)
+ORDER BY id DESC
+LIMIT $1 OFFSET $2
 `
 
 type GetAircraftsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Limit        int32   `json:"limit"`
+	Offset       int32   `json:"offset"`
+	Status       *string `json:"status"`
+	Model        *string `json:"model"`
+	SerialNumber *string `json:"serial_number"`
+	MinBattery   *int32  `json:"min_battery"`
 }
 
 func (q *Queries) GetAircrafts(ctx context.Context, arg GetAircraftsParams) ([]Aircraft, error) {
-	rows, err := q.db.Query(ctx, getAircrafts, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, getAircrafts,
+		arg.Limit,
+		arg.Offset,
+		arg.Status,
+		arg.Model,
+		arg.SerialNumber,
+		arg.MinBattery,
+	)
 	if err != nil {
 		return nil, err
 	}

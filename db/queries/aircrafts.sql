@@ -10,7 +10,14 @@ INSERT INTO aircrafts (
 ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;
 
 -- name: GetAircrafts :many
-SELECT * FROM aircrafts ORDER BY id DESC LIMIT $1 OFFSET $2;
+SELECT * FROM aircrafts
+WHERE
+  (sqlc.narg('status')::text IS NULL OR status = sqlc.narg('status'))
+  AND (sqlc.narg('model')::text IS NULL OR model = sqlc.narg('model'))
+  AND (sqlc.narg('serial_number')::text IS NULL OR serial_number = sqlc.narg('serial_number'))
+  AND (sqlc.narg('min_battery')::integer IS NULL OR battery_health >= sqlc.narg('min_battery'))
+ORDER BY id DESC
+LIMIT $1 OFFSET $2;
 
 -- name: GetAircraft :one
 SELECT * FROM aircrafts WHERE id = $1 LIMIT 1;

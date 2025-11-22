@@ -73,16 +73,31 @@ func (q *Queries) GetFlight(ctx context.Context, id int32) (Flight, error) {
 }
 
 const getFlights = `-- name: GetFlights :many
-SELECT id, aircraft_id, source_lat, source_lon, destination_lat, destination_lon, start_time, end_time, status FROM flights ORDER BY id DESC LIMIT $1 OFFSET $2
+SELECT id, aircraft_id, source_lat, source_lon, destination_lat, destination_lon, start_time, end_time, status FROM flights
+WHERE
+  ($3::integer IS NULL OR status = $3)
+  AND ($4::timestamptz IS NULL OR start_time >= $4)
+  AND ($5::timestamptz IS NULL OR end_time <= $5)
+ORDER BY id DESC
+LIMIT $1 OFFSET $2
 `
 
 type GetFlightsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Limit     int32              `json:"limit"`
+	Offset    int32              `json:"offset"`
+	Status    *int32             `json:"status"`
+	StartDate pgtype.Timestamptz `json:"start_date"`
+	EndDate   pgtype.Timestamptz `json:"end_date"`
 }
 
 func (q *Queries) GetFlights(ctx context.Context, arg GetFlightsParams) ([]Flight, error) {
-	rows, err := q.db.Query(ctx, getFlights, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, getFlights,
+		arg.Limit,
+		arg.Offset,
+		arg.Status,
+		arg.StartDate,
+		arg.EndDate,
+	)
 	if err != nil {
 		return nil, err
 	}

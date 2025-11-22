@@ -1,5 +1,11 @@
 -- name: GetFlights :many
-SELECT * FROM flights ORDER BY id DESC LIMIT $1 OFFSET $2;
+SELECT * FROM flights
+WHERE
+  (sqlc.narg('status')::integer IS NULL OR status = sqlc.narg('status'))
+  AND (sqlc.narg('start_date')::timestamptz IS NULL OR start_time >= sqlc.narg('start_date'))
+  AND (sqlc.narg('end_date')::timestamptz IS NULL OR end_time <= sqlc.narg('end_date'))
+ORDER BY id DESC
+LIMIT $1 OFFSET $2;
 
 -- name: GetFlight :one
 SELECT * FROM flights WHERE id = $1 LIMIT 1;

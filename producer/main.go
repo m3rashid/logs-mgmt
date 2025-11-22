@@ -30,7 +30,7 @@ func generateFakeEvents(producer *kafka.Producer, wg *sync.WaitGroup) {
 		runningFlights.Mutex.RUnlock()
 
 		for _, flight := range runningFlightsData {
-			flightEvent := db.GetRandomFlightEvent(&flight)
+			flightEvent := db.GetRandomFlightEvent(&flight, DELAY.Seconds())
 
 			producer.Produce(&kafka.Message{
 				Value:          flightEvent.ToByteArray(),
@@ -56,7 +56,7 @@ func main() {
 
 	if *seed {
 		ctx := context.Background()
-		err := db.CreateSeedData(ctx, 500) // create 500 aircrafts and some flights
+		err := db.CreateSeedData(ctx, 1000) // create 1000 aircrafts and some flights
 		if err != nil {
 			fmt.Printf("Failed to seed database: %s\n", err)
 			os.Exit(1)

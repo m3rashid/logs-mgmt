@@ -45,11 +45,26 @@ type SystemInfo struct {
 	Uptime  float64 `json:"uptime" bson:"up"`
 }
 
+type FlightEventStatus int
+
+const (
+	FlightEventStatusEarly FlightEventStatus = iota
+	FlightEventStatusOnTime
+	FlightEventStatusArrived
+	FlightEventStatusDeparted
+	FlightEventStatusLanded
+	FlightEventStatusDelayed
+	FlightEventStatusCancelled
+	FlightEventStatusAccident
+	FlightEventStatusEmergency
+)
+
 type FlightEventData struct {
-	Speed     float64 `json:"speed" bson:"speed"`
-	Latitude  float64 `json:"lat" bson:"lat"`
-	Longitude float64 `json:"lon" bson:"lon"`
-	Altitude  float64 `json:"alt" bson:"alt"`
+	Speed     float64           `json:"speed" bson:"speed"`
+	Latitude  float64           `json:"lat" bson:"lat"`
+	Longitude float64           `json:"lon" bson:"lon"`
+	Altitude  float64           `json:"alt" bson:"alt"`
+	Status    FlightEventStatus `json:"status" bson:"status"`
 }
 
 type FlightEvent struct {

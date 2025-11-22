@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const (
@@ -83,4 +85,36 @@ func ParseInt32(s string) (int32, error) {
 		return 0, err
 	}
 	return int32(val), nil
+}
+
+// ParseTimestamp parses a timestamp string into pgtype.Timestamptz
+// Supports RFC3339, ISO8601, and common date formats
+func ParseTimestamp(s string) (pgtype.Timestamptz, error) {
+	var result pgtype.Timestamptz
+
+	if s == "" {
+		return result, nil
+	}
+
+	// Try multiple timestamp formats
+	formats := []string{
+		time.RFC3339,
+		time.RFC3339Nano,
+		"2006-01-02T15:04:05Z07:00",
+		"2006-01-02T15:04:05",
+		"2006-01-02 15:04:05",
+		"2006-01-02",
+	}
+
+	var t time.Time
+	var err error
+	for _, format := range formats {
+		t, err = time.Parse(format, s)
+		if err == nil {
+			result = pgtype.Timestamptz{Time: t, Valid: true}
+			return result, nil
+		}
+	}
+
+	return result, fmt.Errorf("unable to parse timestamp: %s", s)
 }

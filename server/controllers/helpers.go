@@ -2,8 +2,33 @@ package controllers
 
 import (
 	"logs-mgmt/db"
+	"logs-mgmt/server/utils"
 	"time"
 )
+
+type GetAllFlightQuery struct {
+	utils.PaginationQuery
+	Status     string `query:"status"`
+	AircraftID int32  `query:"aircraft_id"`
+	StartDate  string `query:"start_date"`
+	EndDate    string `query:"end_date"`
+}
+
+func (q *GetAllFlightQuery) GetPagination() utils.PaginationQuery {
+	return q.PaginationQuery
+}
+
+type GetAllAircraftQuery struct {
+	utils.PaginationQuery
+	Status       string `query:"status"`
+	Model        string `query:"model"`
+	SerialNumber string `query:"serial_number"`
+	MinBattery   int32  `query:"min_battery"`
+}
+
+func (q *GetAllAircraftQuery) GetPagination() utils.PaginationQuery {
+	return q.PaginationQuery
+}
 
 type createAircraftBody struct {
 	Name                string            `json:"name" validate:"required"`

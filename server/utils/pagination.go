@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-type PaginationRequestQuery struct {
+type PaginationQuery struct {
 	Page  int32 `query:"page"`
 	Limit int32 `query:"limit"`
 }
@@ -19,24 +19,47 @@ type PaginationResponse[T any] struct {
 	HasPreviousPage bool  `json:"hasPreviousPage"`
 }
 
-func (pgRes *PaginationResponse[T]) ParseQuery(r *http.Request, maxLimit int32) error {
-	reqQuery := PaginationRequestQuery{}
-	if err := parseQueries(r, &reqQuery); err != nil {
+// Extract pagination from the query struct
+// This uses type assertion to get the embedded PaginationQuery
+type paginationGetter interface {
+	GetPagination() PaginationQuery
+}
+
+// ParseQueryWithParams parses pagination and additional query parameters
+// queryStruct should be a pointer to your custom query struct that embeds PaginationQuery
+func (pgRes *PaginationResponse[T]) ParseQueryWithParams(r *http.Request, maxLimit int32, queryStruct any) error {
+	if err := parseQueries(r, queryStruct); err != nil {
 		fmt.Println(err)
 	}
 
+	if pg, ok := queryStruct.(paginationGetter); ok {
+		pagination := pg.GetPagination()
+		return pgRes.setPaginationParams(pagination.Page, pagination.Limit, maxLimit)
+	}
+
+	// If GetPagination() method doesn't exist, return an error
+	return fmt.Errorf("queryStruct must implement GetPagination() method")
+}
+
+func (pgRes *PaginationResponse[T]) ParseQuery(r *http.Request, maxLimit int32) error {
+	query := PaginationQuery{}
+	return pgRes.ParseQueryWithParams(r, maxLimit, &query)
+}
+
+// setPaginationParams sets the pagination parameters on the response
+func (pgRes *PaginationResponse[T]) setPaginationParams(page, limit, maxLimit int32) error {
 	var pageNo int32
-	if reqQuery.Page == 0 {
+	if page == 0 {
 		pageNo = 1
 	} else {
-		pageNo = reqQuery.Page
+		pageNo = page
 	}
 
 	var pageLimit int32
-	if reqQuery.Limit == 0 {
+	if limit == 0 {
 		pageLimit = 10
 	} else {
-		pageLimit = reqQuery.Limit
+		pageLimit = limit
 	}
 	pageLimit = min(pageLimit, maxLimit)
 

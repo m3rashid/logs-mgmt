@@ -12,7 +12,9 @@ import (
 
 func GetAircrafts(w http.ResponseWriter, r *http.Request) {
 	paginationRes := utils.PaginationResponse[db.Aircraft]{}
-	if err := paginationRes.ParseQuery(r, 50); err != nil {
+
+	query := &GetAllAircraftQuery{}
+	if err := paginationRes.ParseQueryWithParams(r, 50, query); err != nil {
 		http.Error(w, "Incorrect Parameters", http.StatusBadRequest)
 		return
 	}
@@ -23,11 +25,29 @@ func GetAircrafts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	queries := db.New(pgConn)
-	aircrafts, err := queries.GetAircrafts(r.Context(), db.GetAircraftsParams{
+	searchParams := db.GetAircraftsParams{
 		Limit:  paginationRes.Limit + 1,
 		Offset: (paginationRes.CurrentPage - 1) * paginationRes.Limit,
-	})
+	}
+
+	if query.Status != "" {
+		searchParams.Status = &query.Status
+	}
+
+	if query.Model != "" {
+		searchParams.Model = &query.Model
+	}
+
+	if query.SerialNumber != "" {
+		searchParams.SerialNumber = &query.SerialNumber
+	}
+
+	if query.MinBattery > 0 {
+		searchParams.MinBattery = &query.MinBattery
+	}
+
+	queries := db.New(pgConn)
+	aircrafts, err := queries.GetAircrafts(r.Context(), searchParams)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

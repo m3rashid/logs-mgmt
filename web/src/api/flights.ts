@@ -8,7 +8,7 @@ export const useFlightsQuery = (params: Accessor<PaginationRequestParams>) => {
     queryKey: ['flights', params()] as const,
     queryFn: () => {
       const { page, limit } = params()
-      return apiClient<PaginationResponse<Flight>>(`/api/flights?page=${page}&limit=${limit}`)
+      return apiClient<PaginationResponse<Flight>>(`/api/flights?page=${page}&limit=${limit}&status=1`)
     },
   }))
 }
@@ -56,6 +56,6 @@ export const useUpdateFlightMutation = (options?: { onSuccess?: () => void; onEr
   }))
 }
 
-export function getFlightRealtime() {
-  return new EventSource(`${baseUrl}/api/flights/realtime`)
+export function getFlightRealtime(flightId: number) {
+  return new EventSource(`${baseUrl}/api/events/${flightId}`)
 }
