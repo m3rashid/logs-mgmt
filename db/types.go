@@ -7,7 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type AircraftStatus int
+type AircraftStatus int32
 
 const (
 	AircraftStatusInactive AircraftStatus = iota + 1
@@ -17,7 +17,7 @@ const (
 
 type Position = [2]float64 // [latitude, longitude]
 
-type FlightStatus int
+type FlightStatus int32
 
 const (
 	FlightStatusScheduled FlightStatus = iota + 1
@@ -26,7 +26,7 @@ const (
 	FlightStatusFailed
 )
 
-type LogLevel int
+type LogLevel int32
 
 const (
 	LogLevelNone LogLevel = iota + 1
@@ -45,7 +45,7 @@ type SystemInfo struct {
 	Uptime  float64 `json:"uptime" bson:"up"`
 }
 
-type FlightEventStatus int
+type FlightEventStatus int32
 
 const (
 	FlightEventStatusEarly FlightEventStatus = iota + 1

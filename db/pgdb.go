@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"math/rand/v2"
 	"os"
 	"time"
@@ -43,7 +44,7 @@ func getPostgresDbConnection() (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-func CreateSeedData(ctx context.Context, count int) error {
+func CreateSeedData(ctx context.Context, count int32) error {
 	pgConn, err := GetPostgresDB()
 	if err != nil {
 		return err
@@ -67,6 +68,8 @@ func CreateSeedData(ctx context.Context, count int) error {
 	}
 
 	fmt.Println("Seeding database...")
+
+	var flightsCreated int32 = 0
 
 	// create count number of aircrafts with random data
 	for range count {
@@ -98,8 +101,12 @@ func CreateSeedData(ctx context.Context, count int) error {
 			}); err != nil {
 				return err
 			}
+			flightsCreated++
 		}
+
 	}
+
+	log.Printf("Seeded initial data: %d aircrafts and %d flights\n", count, flightsCreated)
 
 	if err = queries.SetDbSeeded(ctx); err != nil {
 		return err

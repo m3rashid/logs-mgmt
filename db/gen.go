@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 	"math"
-	"math/rand"
+	"math/rand/v2"
 	"sync"
 	"time"
 
@@ -48,51 +48,69 @@ func (a *aircraftSystemInfoSyncState) ResetAircraft(aircraftID int32) {
 }
 
 func GetRandomAircraftStatus() AircraftStatus {
-	aircraftStatuses := []AircraftStatus{
-		AircraftStatusInactive,
-		AircraftStatusActive,
-		AircraftStatusMaintenance,
+	// Weighted distribution for realistic aircraft fleet management
+	r := rand.Float64() * 100
+	switch {
+	case r < 75: // 75% - Active (most common)
+		return AircraftStatusActive
+	case r < 90: // 15% - Maintenance
+		return AircraftStatusMaintenance
+	default: // 10% - Inactive
+		return AircraftStatusInactive
 	}
-	return aircraftStatuses[rand.Intn(len(aircraftStatuses))]
 }
 
 func GetRandomFlightStatus() FlightStatus {
-	statuses := []FlightStatus{
-		FlightStatusScheduled,
-		FlightStatusInFlight,
-		FlightStatusCompleted,
-		FlightStatusFailed,
+	// Weighted distribution for realistic flight data
+	r := rand.Float64() * 100
+	switch {
+	case r < 70: // 70% - Completed
+		return FlightStatusCompleted
+	case r < 85: // 15% - Scheduled
+		return FlightStatusScheduled
+	case r < 97: // 12% - InFlight
+		return FlightStatusInFlight
+	default: // 3% - Failed
+		return FlightStatusFailed
 	}
-	return statuses[rand.Intn(len(statuses))]
 }
 
 func GetRandomFlightEventStatus() FlightEventStatus {
-	statuses := []FlightEventStatus{
-		FlightEventStatusEarly,
-		FlightEventStatusOnTime,
-		FlightEventStatusArrived,
-		FlightEventStatusDeparted,
-		FlightEventStatusLanded,
-		FlightEventStatusDelayed,
-		FlightEventStatusCancelled,
-		FlightEventStatusAccident,
-		FlightEventStatusEmergency,
+	// Weighted distribution with rare terminal/error states
+	r := rand.Float64() * 100
+	switch {
+	case r < 42.3: // 42.3% - OnTime (most common)
+		return FlightEventStatusOnTime
+	case r < 67.3: // 25% - Departed
+		return FlightEventStatusDeparted
+	case r < 77.3: // 10% - Early
+		return FlightEventStatusEarly
+	case r < 92.3: // 15% - Delayed (minor issue)
+		return FlightEventStatusDelayed
+	case r < 95.3: // 3% - Arrived (rare)
+		return FlightEventStatusArrived
+	case r < 98.3: // 3% - Landed (rare)
+		return FlightEventStatusLanded
+	case r < 99.3: // 1% - Emergency (rare)
+		return FlightEventStatusEmergency
+	case r < 99.8: // 0.5% - Cancelled (very rare)
+		return FlightEventStatusCancelled
+	default: // 0.2% - Accident (extremely rare)
+		return FlightEventStatusAccident
 	}
-
-	return statuses[rand.Intn(len(statuses))]
 }
 
 // GetRandomLogLevel returns a random log level with weighted distribution
 func GetRandomLogLevel() LogLevel {
 	// Weighted distribution: more Info logs, fewer Fatal logs
-	weights := []int{5, 50, 25, 15, 5} // None, Info, Warning, Error, Fatal
-	total := 0
+	weights := []int32{5, 50, 25, 15, 5} // None, Info, Warning, Error, Fatal
+	var total int32 = 0
 	for _, w := range weights {
 		total += w
 	}
 
-	r := rand.Intn(total)
-	cumulative := 0
+	r := rand.Int32N(total)
+	var cumulative int32 = 0
 
 	levels := []LogLevel{
 		LogLevelNone,
@@ -255,7 +273,7 @@ func ScheduleRandomNewFlights(wg *sync.WaitGroup, delay time.Duration) {
 		flightsData, err := queries.GetCompletedOrFailedFlightIds(ctx, GetCompletedOrFailedFlightIdsParams{
 			FlightStatus:   FlightStatusCompleted,
 			FlightStatus_2: FlightStatusFailed,
-			Limit:          20,
+			Limit:          rand.Int32N(10), // 0-10 flights
 			Offset:         0,
 		})
 		if err != nil {

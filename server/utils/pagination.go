@@ -13,7 +13,7 @@ type PaginationQuery struct {
 type PaginationResponse[T any] struct {
 	Docs            []T   `json:"docs"`
 	Limit           int32 `json:"limit"`
-	Count           int   `json:"count"`
+	Count           int32 `json:"count"`
 	CurrentPage     int32 `json:"page"`
 	HasNextPage     bool  `json:"hasNextPage"`
 	HasPreviousPage bool  `json:"hasPreviousPage"`
@@ -69,7 +69,7 @@ func (pgRes *PaginationResponse[T]) setPaginationParams(page, limit, maxLimit in
 }
 
 func (pgRes *PaginationResponse[T]) BuildPaginationResponse() {
-	pgRes.Count = len(pgRes.Docs)
+	pgRes.Count = int32(len(pgRes.Docs))
 	if len(pgRes.Docs) == int(pgRes.Limit+1) {
 		pgRes.HasNextPage = true
 		pgRes.Docs = pgRes.Docs[:len(pgRes.Docs)-1]

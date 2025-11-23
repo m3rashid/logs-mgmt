@@ -98,7 +98,7 @@ func DetermineLogLevel(event *db.FlightEvent) db.LogLevel {
 	return logLevel
 }
 
-type FlightHealthStatus int
+type FlightHealthStatus int32
 
 const (
 	FlightHealthGood FlightHealthStatus = iota + 1
@@ -201,7 +201,7 @@ func JudgeFlightHealth(event *db.FlightEvent) FlightHealthReport {
 
 	if event.EventData.EventStatus == db.FlightEventStatusAccident || event.EventData.EventStatus == db.FlightEventStatusEmergency {
 		report.Health = FlightHealthCritical
-		report.Issues = append(report.Issues, fmt.Sprintf("Critical flight status: %d", event.EventData.EventStatus.String()))
+		report.Issues = append(report.Issues, fmt.Sprintf("Critical flight status: %s", event.EventData.EventStatus.String()))
 	}
 
 	// Warning issues (FlightHealthWarning)
