@@ -20,10 +20,7 @@ export function FlightDetail() {
   const flightQuery = useFlightQuery(flightId)
 
   onMount(() => {
-    const id = flightId()
-    if (!id) return
-
-    const eventSource = getFlightRealtime(id)
+    const eventSource = getFlightRealtime()
 
     eventSource.onopen = () => {
       setIsConnected(true)
@@ -32,6 +29,7 @@ export function FlightDetail() {
     eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data) as FlightEvent[]
+        console.log({ data, flightId: flightId() })
         const flightEvent = data.find((e) => e.flight_id === flightId())
         if (flightEvent) setRealtimeData(flightEvent)
       } catch (err) {
@@ -71,7 +69,7 @@ export function FlightDetail() {
             <div class='bg-white rounded-lg border border-gray-200 p-6'>
               <h2 class='text-lg font-semibold text-gray-900 mb-4'>Flight Information</h2>
               <div class='grid grid-cols-2 md:grid-cols-3 gap-4'>
-                <InfoItem label='Status' value={getFlightStatusLabel(flight().status)} />
+                <InfoItem label='Status' value={getFlightStatusLabel(flight().flight_status)} />
                 <InfoItem label='Start Time' value={formatDate(flight().start_time)} />
                 <InfoItem label='End Time' value={formatDate(flight().end_time)} />
                 <InfoItem label='Source' value={formatCoordinates(flight().source_lat, flight().source_lon)} />
@@ -92,7 +90,7 @@ export function FlightDetail() {
                     <InfoItem label='Model' value={aircraft().model} />
                     <InfoItem label='Serial Number' value={aircraft().serial_number} />
                     <InfoItem label='Battery Health' value={`${aircraft().battery_health}%`} />
-                    <InfoItem label='Status' value={getAircraftStatusLabel(aircraft().status)} />
+                    <InfoItem label='Status' value={getAircraftStatusLabel(aircraft().aircraft_status)} />
                     <InfoItem label='Last Maintenance' value={formatDate(aircraft().last_maintenance_date)} />
                   </div>
                 </div>

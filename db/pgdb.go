@@ -75,7 +75,7 @@ func CreateSeedData(ctx context.Context, count int) error {
 			Model:               gofakeit.CarModel(),
 			SerialNumber:        gofakeit.Person().CreditCard.Number,
 			BatteryHealth:       rand.Int32N(101),
-			Status:              GetRandomStatus(),
+			AircraftStatus:      GetRandomAircraftStatus(),
 			LastMaintenanceDate: pgtype.Timestamp{Time: time.Now(), Valid: true},
 			MaintenanceDueDate:  pgtype.Timestamp{Time: time.Now().Add(time.Hour * 24 * 30), Valid: true}, // 30 days from now
 		})
@@ -94,7 +94,7 @@ func CreateSeedData(ctx context.Context, count int) error {
 				DestinationLon: gofakeit.Float32(),
 				StartTime:      pgtype.Timestamp{Time: time.Now(), Valid: true},
 				EndTime:        pgtype.Timestamp{Time: time.Now().Add(time.Hour * 24 * 30), Valid: true}, // 30 days from now
-				Status:         GetRandomFlightStatus(),
+				FlightStatus:   GetRandomFlightStatus(),
 			}); err != nil {
 				return err
 			}

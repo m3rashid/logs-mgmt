@@ -25,10 +25,10 @@ export function Aircrafts() {
       render: (aircraft) => `${aircraft.battery_health}%`,
     },
     {
-      key: 'status',
+      key: 'aircraft_status',
       label: 'Status',
       render: (aircraft) => (
-        <span class={getStatusColor(aircraft.status)}>{getAircraftStatusLabel(aircraft.status)}</span>
+        <span class={getStatusColor(aircraft.aircraft_status)}>{getAircraftStatusLabel(aircraft.aircraft_status)}</span>
       ),
     },
     {
@@ -61,11 +61,12 @@ export function Aircrafts() {
   )
 }
 
-function getStatusColor(status: AircraftStatus) {
+function getStatusColor(aircraftStatus: AircraftStatus) {
   const colors = [
+    '',
     'text-gray-600 bg-gray-50 px-2 py-1 rounded-full text-xs font-medium', // Inactive
     'text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-medium', // Active
     'text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full text-xs font-medium', // Maintenance
   ]
-  return colors[status] || 'text-gray-600 bg-gray-50 px-2 py-1 rounded-full text-xs font-medium'
+  return colors[aircraftStatus] || 'text-gray-600 bg-gray-50 px-2 py-1 rounded-full text-xs font-medium'
 }

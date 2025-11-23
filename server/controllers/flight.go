@@ -24,13 +24,8 @@ func GetFlights(w http.ResponseWriter, r *http.Request) {
 		Offset: (paginationRes.CurrentPage - 1) * paginationRes.Limit,
 	}
 
-	if query.Status != "" {
-		status, err := utils.ParseInt32(query.Status)
-		if err != nil {
-			http.Error(w, "Invalid status", http.StatusBadRequest)
-			return
-		}
-		searchParams.Status = &status
+	if query.FlightStatus != 0 {
+		searchParams.FlightStatus = query.FlightStatus
 	}
 
 	if query.StartDate != "" {
@@ -120,7 +115,7 @@ func CreateFlight(w http.ResponseWriter, r *http.Request) {
 		DestinationLon: body.DestinationLon,
 		StartTime:      pgtype.Timestamp{Time: body.StartTime, Valid: true},
 		EndTime:        pgtype.Timestamp{Time: body.EndTime, Valid: true},
-		Status:         db.FlightStatusScheduled,
+		FlightStatus:   db.FlightStatusScheduled,
 	})
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -163,9 +158,9 @@ func UpdateFlight(w http.ResponseWriter, r *http.Request) {
 
 	queries := db.New(pgConn)
 	flight, err := queries.UpdateFlight(r.Context(), db.UpdateFlightParams{
-		ID:      id,
-		Status:  body.Status,
-		EndTime: pgtype.Timestamp{Time: body.EndTime, Valid: true},
+		ID:           id,
+		FlightStatus: body.FlightStatus,
+		EndTime:      pgtype.Timestamp{Time: body.EndTime, Valid: true},
 	})
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

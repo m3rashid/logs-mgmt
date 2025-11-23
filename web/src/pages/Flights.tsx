@@ -37,9 +37,11 @@ export function Flights() {
       render: (flight) => formatDate(flight.end_time),
     },
     {
-      key: 'status',
+      key: 'flight_status',
       label: 'Status',
-      render: (flight) => <span class={getStatusColor(flight.status)}>{getFlightStatusLabel(flight.status)}</span>,
+      render: (flight) => (
+        <span class={getStatusColor(flight.flight_status)}>{getFlightStatusLabel(flight.flight_status)}</span>
+      ),
     },
   ]
 
@@ -67,12 +69,13 @@ export function Flights() {
   )
 }
 
-function getStatusColor(status: FlightStatus) {
+function getStatusColor(flightStatus: FlightStatus) {
   const colors = [
+    '',
     'text-blue-600 bg-blue-50 px-2 py-1 rounded-full text-xs font-medium', // Scheduled
     'text-purple-600 bg-purple-50 px-2 py-1 rounded-full text-xs font-medium', // InFlight
     'text-green-600 bg-green-50 px-2 py-1 rounded-full text-xs font-medium', // Completed
     'text-red-600 bg-red-50 px-2 py-1 rounded-full text-xs font-medium', // Failed
   ]
-  return colors[status] || 'text-gray-600 bg-gray-50 px-2 py-1 rounded-full text-xs font-medium'
+  return colors[flightStatus] || 'text-gray-600 bg-gray-50 px-2 py-1 rounded-full text-xs font-medium'
 }

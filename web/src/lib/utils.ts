@@ -16,14 +16,14 @@ export function formatDate(date: string) {
   })
 }
 
-export function getAircraftStatusLabel(status: AircraftStatus): string {
-  const labels = ['Inactive', 'Active', 'Maintenance']
-  return labels[status] || 'Unknown'
+export function getAircraftStatusLabel(aircraftStatus: AircraftStatus): string {
+  const labels = ['', 'Inactive', 'Active', 'Maintenance']
+  return labels[aircraftStatus] || 'Unknown'
 }
 
-export function getFlightStatusLabel(status: FlightStatus): string {
-  const labels = ['Scheduled', 'In Flight', 'Completed', 'Failed']
-  return labels[status] || 'Unknown'
+export function getFlightStatusLabel(flightStatus: FlightStatus): string {
+  const labels = ['', 'Scheduled', 'In Flight', 'Completed', 'Failed']
+  return labels[flightStatus] || 'Unknown'
 }
 
 export function formatCoordinates(lat: number, lon: number): string {

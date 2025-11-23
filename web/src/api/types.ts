@@ -10,7 +10,7 @@ export type Aircraft = {
   model: string
   serial_number: string
   battery_health: number
-  status: AircraftStatus
+  aircraft_status: AircraftStatus
   last_maintenance_date: string
   maintenance_due_date: string
   created_at: string
@@ -27,7 +27,7 @@ export type Flight = {
   destination_lon: number
   start_time: string
   end_time: string
-  status: FlightStatus
+  flight_status: FlightStatus
 }
 
 export type SystemInfo = {
@@ -44,6 +44,7 @@ export type FlightEventData = {
   lat: number
   lon: number
   alt: number
+  status: number
 }
 
 export type FlightEvent = {
@@ -62,7 +63,7 @@ export type CreateAircraftInput = {
   model: string
   serial_number: string
   battery_health: number
-  status: AircraftStatus
+  aircraft_status: AircraftStatus
   last_maintenance_date?: string
   maintenance_due_date?: string
 }

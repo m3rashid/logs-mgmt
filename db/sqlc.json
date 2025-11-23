@@ -18,11 +18,11 @@
               "go_type": { "type": "string" }
             },
             {
-              "column": "aircrafts.status",
+              "column": "aircrafts.aircraft_status",
               "go_type": { "type": "AircraftStatus" }
             },
             {
-              "column": "flights.status",
+              "column": "flights.flight_status",
               "go_type": { "type": "FlightStatus" }
             }
           ]

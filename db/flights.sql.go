@@ -20,7 +20,7 @@ INSERT INTO flights (
 	destination_lon,
 	start_time,
 	end_time,
-	status
+	flight_status
 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
 `
 
@@ -32,7 +32,7 @@ type CreateFlightParams struct {
 	DestinationLon float32          `json:"destination_lon"`
 	StartTime      pgtype.Timestamp `json:"start_time"`
 	EndTime        pgtype.Timestamp `json:"end_time"`
-	Status         FlightStatus     `json:"status"`
+	FlightStatus   FlightStatus     `json:"flight_status"`
 }
 
 func (q *Queries) CreateFlight(ctx context.Context, arg CreateFlightParams) (int32, error) {
@@ -44,7 +44,7 @@ func (q *Queries) CreateFlight(ctx context.Context, arg CreateFlightParams) (int
 		arg.DestinationLon,
 		arg.StartTime,
 		arg.EndTime,
-		arg.Status,
+		arg.FlightStatus,
 	)
 	var id int32
 	err := row.Scan(&id)
@@ -52,7 +52,7 @@ func (q *Queries) CreateFlight(ctx context.Context, arg CreateFlightParams) (int
 }
 
 const getFlight = `-- name: GetFlight :one
-SELECT id, aircraft_id, source_lat, source_lon, destination_lat, destination_lon, start_time, end_time, status FROM flights WHERE id = $1 LIMIT 1
+SELECT id, aircraft_id, source_lat, source_lon, destination_lat, destination_lon, start_time, end_time, flight_status FROM flights WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetFlight(ctx context.Context, id int32) (Flight, error) {
@@ -67,15 +67,15 @@ func (q *Queries) GetFlight(ctx context.Context, id int32) (Flight, error) {
 		&i.DestinationLon,
 		&i.StartTime,
 		&i.EndTime,
-		&i.Status,
+		&i.FlightStatus,
 	)
 	return i, err
 }
 
 const getFlights = `-- name: GetFlights :many
-SELECT id, aircraft_id, source_lat, source_lon, destination_lat, destination_lon, start_time, end_time, status FROM flights
+SELECT id, aircraft_id, source_lat, source_lon, destination_lat, destination_lon, start_time, end_time, flight_status FROM flights
 WHERE
-  ($3::integer IS NULL OR status = $3)
+	flight_status = COALESCE($3, flight_status)
   AND ($4::timestamptz IS NULL OR start_time >= $4)
   AND ($5::timestamptz IS NULL OR end_time <= $5)
 ORDER BY id DESC
@@ -83,18 +83,18 @@ LIMIT $1 OFFSET $2
 `
 
 type GetFlightsParams struct {
-	Limit     int32              `json:"limit"`
-	Offset    int32              `json:"offset"`
-	Status    *int32             `json:"status"`
-	StartDate pgtype.Timestamptz `json:"start_date"`
-	EndDate   pgtype.Timestamptz `json:"end_date"`
+	Limit        int32              `json:"limit"`
+	Offset       int32              `json:"offset"`
+	FlightStatus FlightStatus       `json:"flight_status"`
+	StartDate    pgtype.Timestamptz `json:"start_date"`
+	EndDate      pgtype.Timestamptz `json:"end_date"`
 }
 
 func (q *Queries) GetFlights(ctx context.Context, arg GetFlightsParams) ([]Flight, error) {
 	rows, err := q.db.Query(ctx, getFlights,
 		arg.Limit,
 		arg.Offset,
-		arg.Status,
+		arg.FlightStatus,
 		arg.StartDate,
 		arg.EndDate,
 	)
@@ -114,7 +114,7 @@ func (q *Queries) GetFlights(ctx context.Context, arg GetFlightsParams) ([]Fligh
 			&i.DestinationLon,
 			&i.StartTime,
 			&i.EndTime,
-			&i.Status,
+			&i.FlightStatus,
 		); err != nil {
 			return nil, err
 		}
@@ -127,7 +127,7 @@ func (q *Queries) GetFlights(ctx context.Context, arg GetFlightsParams) ([]Fligh
 }
 
 const getRunningFlights = `-- name: GetRunningFlights :many
-SELECT id, aircraft_id FROM flights WHERE status = $1
+SELECT id, aircraft_id FROM flights WHERE flight_status = $1
 `
 
 type GetRunningFlightsRow struct {
@@ -135,8 +135,8 @@ type GetRunningFlightsRow struct {
 	AircraftID int32 `json:"aircraft_id"`
 }
 
-func (q *Queries) GetRunningFlights(ctx context.Context, status FlightStatus) ([]GetRunningFlightsRow, error) {
-	rows, err := q.db.Query(ctx, getRunningFlights, status)
+func (q *Queries) GetRunningFlights(ctx context.Context, flightStatus FlightStatus) ([]GetRunningFlightsRow, error) {
+	rows, err := q.db.Query(ctx, getRunningFlights, flightStatus)
 	if err != nil {
 		return nil, err
 	}
@@ -157,19 +157,19 @@ func (q *Queries) GetRunningFlights(ctx context.Context, status FlightStatus) ([
 
 const updateFlight = `-- name: UpdateFlight :one
 UPDATE flights SET
-	status = COALESCE($2, status),
+	flight_status = COALESCE($2, flight_status),
 	end_time = COALESCE($3, end_time)
-WHERE id = $1 RETURNING id, aircraft_id, source_lat, source_lon, destination_lat, destination_lon, start_time, end_time, status
+WHERE id = $1 RETURNING id, aircraft_id, source_lat, source_lon, destination_lat, destination_lon, start_time, end_time, flight_status
 `
 
 type UpdateFlightParams struct {
-	ID      int32            `json:"id"`
-	Status  FlightStatus     `json:"status"`
-	EndTime pgtype.Timestamp `json:"end_time"`
+	ID           int32            `json:"id"`
+	FlightStatus FlightStatus     `json:"flight_status"`
+	EndTime      pgtype.Timestamp `json:"end_time"`
 }
 
 func (q *Queries) UpdateFlight(ctx context.Context, arg UpdateFlightParams) (Flight, error) {
-	row := q.db.QueryRow(ctx, updateFlight, arg.ID, arg.Status, arg.EndTime)
+	row := q.db.QueryRow(ctx, updateFlight, arg.ID, arg.FlightStatus, arg.EndTime)
 	var i Flight
 	err := row.Scan(
 		&i.ID,
@@ -180,7 +180,7 @@ func (q *Queries) UpdateFlight(ctx context.Context, arg UpdateFlightParams) (Fli
 		&i.DestinationLon,
 		&i.StartTime,
 		&i.EndTime,
-		&i.Status,
+		&i.FlightStatus,
 	)
 	return i, err
 }

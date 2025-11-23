@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"log"
 	"logs-mgmt/db"
 	"logs-mgmt/server/utils"
 	"net/http"
@@ -30,10 +29,6 @@ func GetAircrafts(w http.ResponseWriter, r *http.Request) {
 		Offset: (paginationRes.CurrentPage - 1) * paginationRes.Limit,
 	}
 
-	if query.Status != "" {
-		searchParams.Status = &query.Status
-	}
-
 	if query.Model != "" {
 		searchParams.Model = &query.Model
 	}
@@ -42,7 +37,7 @@ func GetAircrafts(w http.ResponseWriter, r *http.Request) {
 		searchParams.SerialNumber = &query.SerialNumber
 	}
 
-	if query.MinBattery > 0 {
+	if query.MinBattery != 0 {
 		searchParams.MinBattery = &query.MinBattery
 	}
 
@@ -110,7 +105,7 @@ func CreateAircraft(w http.ResponseWriter, r *http.Request) {
 		Model:               body.Model,
 		SerialNumber:        body.SerialNumber,
 		BatteryHealth:       body.BatteryHealth,
-		Status:              body.Status,
+		AircraftStatus:      body.AircraftStatus,
 		LastMaintenanceDate: pgtype.Timestamp{Time: body.LastMaintenanceDate, Valid: true},
 		MaintenanceDueDate:  pgtype.Timestamp{Time: body.MaintenanceDueDate, Valid: true},
 	})
@@ -127,5 +122,4 @@ func CreateAircraft(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	log.Println("Aircraft created successfully", aircraftId)
 }

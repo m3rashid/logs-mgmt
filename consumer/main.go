@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"logs-mgmt/db"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
@@ -39,6 +41,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go syncDataPeriodically(&wg)
+
+	wg.Add(1)
+	go periodicFlush(&wg)
+
 	// Channel to handle OS signals for graceful shutdown
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
@@ -47,7 +57,8 @@ func main() {
 	for {
 		select {
 		case sig := <-sigchan:
-			fmt.Printf("Caught signal %v: Terminating\n", sig)
+			log.Printf("\nCaught signal %v: Initiating graceful shutdown...\n", sig)
+			eventBuffer.FlushBuffer()
 			return
 
 		default:
@@ -58,15 +69,14 @@ func main() {
 
 			switch e := ev.(type) {
 			case *kafka.Message:
-				fmt.Printf("New message from topic %s [%d] at offset %v\n", *e.TopicPartition.Topic, e.TopicPartition.Partition, e.TopicPartition.Offset)
 				processMessage(e)
 
 			case kafka.Error:
 				// Errors are informational and may not be fatal
-				fmt.Printf("Consumer error: %v (%v)\n", e.Code(), e)
+				log.Printf("Consumer error: %v (%v)\n", e.Code(), e)
 
 			default:
-				fmt.Printf("Ignored event: %v\n", e)
+				// Silently ignore other event types
 			}
 		}
 	}

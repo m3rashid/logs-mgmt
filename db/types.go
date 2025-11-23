@@ -10,7 +10,7 @@ import (
 type AircraftStatus int
 
 const (
-	AircraftStatusInactive AircraftStatus = iota
+	AircraftStatusInactive AircraftStatus = iota + 1
 	AircraftStatusActive
 	AircraftStatusMaintenance
 )
@@ -20,7 +20,7 @@ type Position = [2]float64 // [latitude, longitude]
 type FlightStatus int
 
 const (
-	FlightStatusScheduled FlightStatus = iota
+	FlightStatusScheduled FlightStatus = iota + 1
 	FlightStatusInFlight
 	FlightStatusCompleted
 	FlightStatusFailed
@@ -29,7 +29,7 @@ const (
 type LogLevel int
 
 const (
-	LogLevelNone LogLevel = iota
+	LogLevelNone LogLevel = iota + 1
 	LogLevelInfo
 	LogLevelWarning
 	LogLevelError
@@ -48,23 +48,37 @@ type SystemInfo struct {
 type FlightEventStatus int
 
 const (
-	FlightEventStatusEarly FlightEventStatus = iota
+	FlightEventStatusEarly FlightEventStatus = iota + 1
 	FlightEventStatusOnTime
-	FlightEventStatusArrived
 	FlightEventStatusDeparted
+	FlightEventStatusArrived
 	FlightEventStatusLanded
 	FlightEventStatusDelayed
 	FlightEventStatusCancelled
-	FlightEventStatusAccident
 	FlightEventStatusEmergency
+	FlightEventStatusAccident
 )
 
+func (f FlightEventStatus) String() string {
+	return []string{
+		"Early",
+		"On Time",
+		"Departed",
+		"Arrived",
+		"Landed",
+		"Delayed",
+		"Cancelled",
+		"Emergency",
+		"Accident",
+	}[f-1] // Subtract 1 to convert to 0-based index
+}
+
 type FlightEventData struct {
-	Speed     float64           `json:"speed" bson:"speed"`
-	Latitude  float64           `json:"lat" bson:"lat"`
-	Longitude float64           `json:"lon" bson:"lon"`
-	Altitude  float64           `json:"alt" bson:"alt"`
-	Status    FlightEventStatus `json:"status" bson:"status"`
+	Speed       float64           `json:"speed" bson:"speed"`
+	Latitude    float64           `json:"lat" bson:"lat"`
+	Longitude   float64           `json:"lon" bson:"lon"`
+	Altitude    float64           `json:"alt" bson:"alt"`
+	EventStatus FlightEventStatus `json:"status" bson:"status"`
 }
 
 type FlightEvent struct {

@@ -44,17 +44,15 @@ func (a *aircraftSystemInfoSyncState) ResetAircraft(aircraftID int32) {
 	delete(a.data, aircraftID)
 }
 
-// GetRandomStatus returns a random aircraft status
-func GetRandomStatus() AircraftStatus {
-	statuses := []AircraftStatus{
+func GetRandomAircraftStatus() AircraftStatus {
+	aircraftStatuses := []AircraftStatus{
 		AircraftStatusInactive,
 		AircraftStatusActive,
 		AircraftStatusMaintenance,
 	}
-	return statuses[rand.Intn(len(statuses))]
+	return aircraftStatuses[rand.Intn(len(aircraftStatuses))]
 }
 
-// GetRandomFlightStatus returns a random flight status
 func GetRandomFlightStatus() FlightStatus {
 	statuses := []FlightStatus{
 		FlightStatusScheduled,
@@ -65,7 +63,6 @@ func GetRandomFlightStatus() FlightStatus {
 	return statuses[rand.Intn(len(statuses))]
 }
 
-// GetRandomFlightEventStatus returns a random flight event status
 func GetRandomFlightEventStatus() FlightEventStatus {
 	statuses := []FlightEventStatus{
 		FlightEventStatusEarly,
@@ -216,11 +213,11 @@ func GetRandomFlightEventData(flightID int32) FlightEventData {
 
 	// Round values for output
 	return FlightEventData{
-		Speed:     math.Round(state.Speed*100) / 100,
-		Latitude:  math.Round(state.Latitude*1000000) / 1000000,  // 6 decimal places
-		Longitude: math.Round(state.Longitude*1000000) / 1000000, // 6 decimal places
-		Altitude:  math.Round(state.Altitude*100) / 100,
-		Status:    GetRandomFlightEventStatus(),
+		Speed:       math.Round(state.Speed*100) / 100,
+		Latitude:    math.Round(state.Latitude*1000000) / 1000000,  // 6 decimal places
+		Longitude:   math.Round(state.Longitude*1000000) / 1000000, // 6 decimal places
+		Altitude:    math.Round(state.Altitude*100) / 100,
+		EventStatus: GetRandomFlightEventStatus(),
 	}
 }
 
