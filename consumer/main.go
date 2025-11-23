@@ -44,10 +44,11 @@ func main() {
 	var wg sync.WaitGroup
 
 	wg.Add(1)
-	go syncDataPeriodically(&wg)
+	go syncFlightsDataPeriodically(&wg)
 
+	eventsToMongodbBuffer := NewBufferedFlush(EventsToMongoBufferConfig)
 	wg.Add(1)
-	go periodicFlush(&wg)
+	go eventsToMongodbBuffer.HandlePeriodicFlush(&wg)
 
 	// Channel to handle OS signals for graceful shutdown
 	sigchan := make(chan os.Signal, 1)
@@ -58,7 +59,7 @@ func main() {
 		select {
 		case sig := <-sigchan:
 			log.Printf("\nCaught signal %v: Initiating graceful shutdown...\n", sig)
-			eventBuffer.FlushBuffer()
+			eventsToMongodbBuffer.FlushBuffer()
 			return
 
 		default:
@@ -69,7 +70,7 @@ func main() {
 
 			switch e := ev.(type) {
 			case *kafka.Message:
-				processMessage(e)
+				processMessage(e, eventsToMongodbBuffer)
 
 			case kafka.Error:
 				// Errors are informational and may not be fatal

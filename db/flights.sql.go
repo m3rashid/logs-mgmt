@@ -51,6 +51,50 @@ func (q *Queries) CreateFlight(ctx context.Context, arg CreateFlightParams) (int
 	return id, err
 }
 
+const getCompletedOrFailedFlightIds = `-- name: GetCompletedOrFailedFlightIds :many
+SELECT id as flight_id, aircraft_id FROM flights
+WHERE flight_status IN ($1, $2)
+ORDER BY id DESC
+LIMIT $3 OFFSET $4
+`
+
+type GetCompletedOrFailedFlightIdsParams struct {
+	FlightStatus   FlightStatus `json:"flight_status"`
+	FlightStatus_2 FlightStatus `json:"flight_status_2"`
+	Limit          int32        `json:"limit"`
+	Offset         int32        `json:"offset"`
+}
+
+type GetCompletedOrFailedFlightIdsRow struct {
+	FlightID   int32 `json:"flight_id"`
+	AircraftID int32 `json:"aircraft_id"`
+}
+
+func (q *Queries) GetCompletedOrFailedFlightIds(ctx context.Context, arg GetCompletedOrFailedFlightIdsParams) ([]GetCompletedOrFailedFlightIdsRow, error) {
+	rows, err := q.db.Query(ctx, getCompletedOrFailedFlightIds,
+		arg.FlightStatus,
+		arg.FlightStatus_2,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetCompletedOrFailedFlightIdsRow
+	for rows.Next() {
+		var i GetCompletedOrFailedFlightIdsRow
+		if err := rows.Scan(&i.FlightID, &i.AircraftID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getFlight = `-- name: GetFlight :one
 SELECT id, aircraft_id, source_lat, source_lon, destination_lat, destination_lon, start_time, end_time, flight_status FROM flights WHERE id = $1 LIMIT 1
 `

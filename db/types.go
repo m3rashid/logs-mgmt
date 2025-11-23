@@ -54,8 +54,8 @@ const (
 	FlightEventStatusArrived
 	FlightEventStatusLanded
 	FlightEventStatusDelayed
-	FlightEventStatusCancelled
 	FlightEventStatusEmergency
+	FlightEventStatusCancelled
 	FlightEventStatusAccident
 )
 

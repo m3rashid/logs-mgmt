@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const SYNC_INTERVAL = 10 * time.Second
+const SYNC_INTERVAL = 2 * time.Second
 
 type RunningFlights struct {
 	Data  map[int32]*db.Flight // key: flightID, value: full flight data
@@ -28,7 +28,7 @@ func (rf *RunningFlights) GetFlightData(flightID int32) (*db.Flight, bool) {
 	return data, exists
 }
 
-func syncDataPeriodically(wg *sync.WaitGroup) {
+func syncFlightsDataPeriodically(wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	for {

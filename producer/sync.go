@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"logs-mgmt/db"
 	"sync"
 	"time"
 )
 
-const SYNC_INTERVAL = 10 * time.Second
+const SYNC_INTERVAL = 2 * time.Second
 
 type RunningFlights struct {
 	Data  []db.RunningFlightsData
@@ -49,7 +50,7 @@ func syncDataPerioically(wg *sync.WaitGroup) {
 		runningFlights.Data = cleanedFlights
 		runningFlights.Mutex.Unlock()
 
-		fmt.Printf("[%s] Syncing data periodically. Total running flights: %d\n", time.Now().Format("15:04:05"), len(runningFlights.Data))
+		log.Printf("syncing data periodically. Total running flights: %d\n", len(runningFlights.Data))
 		time.Sleep(SYNC_INTERVAL)
 	}
 }

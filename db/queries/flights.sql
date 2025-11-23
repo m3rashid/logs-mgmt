@@ -22,6 +22,12 @@ WHERE
 ORDER BY id DESC
 LIMIT $1 OFFSET $2;
 
+-- name: GetCompletedOrFailedFlightIds :many
+SELECT id as flight_id, aircraft_id FROM flights
+WHERE flight_status IN ($1, $2)
+ORDER BY id DESC
+LIMIT $3 OFFSET $4;
+
 -- name: UpdateFlight :one
 UPDATE flights SET
 	flight_status = COALESCE($2, flight_status),

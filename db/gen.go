@@ -1,12 +1,15 @@
 package db
 
 import (
+	"context"
+	"log"
 	"math"
 	"math/rand"
 	"sync"
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const KAFKA_TOPIC string = "logs-topic"
@@ -234,5 +237,47 @@ func GetRandomFlightEvent(data *RunningFlightsData, delay float64) FlightEvent {
 		Timestamp:  time.Now(),
 		SystemInfo: GetRandomSystemInfo(data.AircraftID, delay),
 		EventData:  GetRandomFlightEventData(data.FlightID),
+	}
+}
+
+func ScheduleRandomNewFlights(wg *sync.WaitGroup, delay time.Duration) {
+	defer wg.Done()
+
+	for {
+		pgConn, err := GetPostgresDB()
+		if err != nil {
+			continue
+		}
+
+		ctx := context.Background()
+
+		queries := New(pgConn)
+		flightsData, err := queries.GetCompletedOrFailedFlightIds(ctx, GetCompletedOrFailedFlightIdsParams{
+			FlightStatus:   FlightStatusCompleted,
+			FlightStatus_2: FlightStatusFailed,
+			Limit:          20,
+			Offset:         0,
+		})
+		if err != nil {
+			continue
+		}
+
+		for _, flightData := range flightsData {
+			if _, err := queries.CreateFlight(ctx, CreateFlightParams{
+				AircraftID:     flightData.AircraftID,
+				SourceLat:      gofakeit.Float32(),
+				SourceLon:      gofakeit.Float32(),
+				DestinationLat: gofakeit.Float32(),
+				DestinationLon: gofakeit.Float32(),
+				StartTime:      pgtype.Timestamp{Time: time.Now(), Valid: true},
+				EndTime:        pgtype.Timestamp{Time: time.Now().Add(time.Minute * 5), Valid: true}, // 10 seconds from now
+				FlightStatus:   FlightStatusInFlight,
+			}); err != nil {
+				continue
+			}
+		}
+
+		log.Printf("scheduled %d new flights\n", len(flightsData))
+		time.Sleep(delay)
 	}
 }
