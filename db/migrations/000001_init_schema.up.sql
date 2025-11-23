@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS aircrafts (
     model VARCHAR(255) NOT NULL,
     serial_number VARCHAR(255) NOT NULL,
     battery_health INTEGER NOT NULL,
-    status INTEGER NOT NULL,
+    aircraft_status INTEGER NOT NULL,
     last_maintenance_date TIMESTAMP NOT NULL,
     maintenance_due_date TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS flights (
     destination_lon REAL NOT NULL,
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP,
-    status INTEGER NOT NULL,
+    flight_status INTEGER NOT NULL,
     FOREIGN KEY (aircraft_id) REFERENCES aircrafts(id) ON DELETE CASCADE
 );
 
@@ -30,5 +30,5 @@ CREATE TABLE IF NOT EXISTS db_seeded (
 );
 
 CREATE INDEX IF NOT EXISTS idx_flights_aircraft_id ON flights(aircraft_id);
-CREATE INDEX IF NOT EXISTS idx_flights_status ON flights(status);
-CREATE INDEX IF NOT EXISTS idx_aircrafts_status ON aircrafts(status);
+CREATE INDEX IF NOT EXISTS idx_flights_flight_status ON flights(flight_status);
+CREATE INDEX IF NOT EXISTS idx_aircrafts_aircraft_status ON aircrafts(aircraft_status);

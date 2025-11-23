@@ -24,9 +24,10 @@ func main() {
 
 	apiRouter.HandleFunc("GET /api/flights", controllers.GetFlights)
 	apiRouter.HandleFunc("POST /api/flights", controllers.CreateFlight)
-	apiRouter.HandleFunc("GET /api/flights/realtime", controllers.FlightDetailsRealtime())
 	apiRouter.HandleFunc("PUT /api/flights/{flightId}", controllers.UpdateFlight)
 	apiRouter.HandleFunc("GET /api/flights/{flightId}", controllers.GetSingleFlight)
+
+	apiRouter.HandleFunc("GET /api/events/flights", controllers.FlightEventsRealtime())
 
 	PORT := "0.0.0.0:" + os.Getenv("PORT")
 	server := http.Server{

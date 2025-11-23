@@ -14,7 +14,7 @@ type Aircraft struct {
 	Model               string           `json:"model"`
 	SerialNumber        string           `json:"serial_number"`
 	BatteryHealth       int32            `json:"battery_health"`
-	Status              AircraftStatus   `json:"status"`
+	AircraftStatus      AircraftStatus   `json:"aircraft_status"`
 	LastMaintenanceDate pgtype.Timestamp `json:"last_maintenance_date"`
 	MaintenanceDueDate  pgtype.Timestamp `json:"maintenance_due_date"`
 	CreatedAt           pgtype.Timestamp `json:"created_at"`
@@ -35,5 +35,5 @@ type Flight struct {
 	DestinationLon float32          `json:"destination_lon"`
 	StartTime      pgtype.Timestamp `json:"start_time"`
 	EndTime        pgtype.Timestamp `json:"end_time"`
-	Status         FlightStatus     `json:"status"`
+	FlightStatus   FlightStatus     `json:"flight_status"`
 }

@@ -66,6 +66,14 @@ func parseIntoStruct(queryParams map[string][]string, destStruct reflect.Value) 
 			continue
 		}
 
+		if fieldType.Anonymous && field.Kind() == reflect.Struct {
+			// Recursively parse the embedded struct
+			if err := parseIntoStruct(queryParams, field); err != nil {
+				return err
+			}
+			continue
+		}
+
 		// Get the query tag or use field name as fallback
 		queryTag := fieldType.Tag.Get("query")
 		if queryTag == "" {

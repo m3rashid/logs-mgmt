@@ -1,22 +1,27 @@
 package db
 
 import (
+	"context"
+	"log"
 	"math"
-	"math/rand"
+	"math/rand/v2"
 	"sync"
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const KAFKA_TOPIC string = "logs-topic"
 
-// Global state variables
-var flightPositions = flightPositionsSyncState{data: make(map[int32]*FlightEventData)}
+var flightPositions = flightPositionsSyncState{
+	data: make(map[int32]*FlightEventData),
+}
 
-var aircraftSystemInfo = aircraftSystemInfoSyncState{data: make(map[int32]*SystemInfo)}
+var aircraftSystemInfo = aircraftSystemInfoSyncState{
+	data: make(map[int32]*SystemInfo),
+}
 
-// State for consistent flight data per flight ID
 type flightPositionsSyncState struct {
 	sync.RWMutex
 	data map[int32]*FlightEventData
@@ -42,38 +47,70 @@ func (a *aircraftSystemInfoSyncState) ResetAircraft(aircraftID int32) {
 	delete(a.data, aircraftID)
 }
 
-// GetRandomStatus returns a random aircraft status
-func GetRandomStatus() AircraftStatus {
-	statuses := []AircraftStatus{
-		AircraftStatusInactive,
-		AircraftStatusActive,
-		AircraftStatusMaintenance,
+func GetRandomAircraftStatus() AircraftStatus {
+	// Weighted distribution for realistic aircraft fleet management
+	r := rand.Float64() * 100
+	switch {
+	case r < 75: // 75% - Active (most common)
+		return AircraftStatusActive
+	case r < 90: // 15% - Maintenance
+		return AircraftStatusMaintenance
+	default: // 10% - Inactive
+		return AircraftStatusInactive
 	}
-	return statuses[rand.Intn(len(statuses))]
 }
 
-// GetRandomFlightStatus returns a random flight status
 func GetRandomFlightStatus() FlightStatus {
-	statuses := []FlightStatus{
-		FlightStatusScheduled,
-		FlightStatusInFlight,
-		FlightStatusCompleted,
-		FlightStatusFailed,
+	// Weighted distribution for realistic flight data
+	r := rand.Float64() * 100
+	switch {
+	case r < 70: // 70% - Completed
+		return FlightStatusCompleted
+	case r < 85: // 15% - Scheduled
+		return FlightStatusScheduled
+	case r < 97: // 12% - InFlight
+		return FlightStatusInFlight
+	default: // 3% - Failed
+		return FlightStatusFailed
 	}
-	return statuses[rand.Intn(len(statuses))]
+}
+
+func GetRandomFlightEventStatus() FlightEventStatus {
+	// Weighted distribution with rare terminal/error states
+	r := rand.Float64() * 100
+	switch {
+	case r < 42.3: // 42.3% - OnTime (most common)
+		return FlightEventStatusOnTime
+	case r < 67.3: // 25% - Departed
+		return FlightEventStatusDeparted
+	case r < 77.3: // 10% - Early
+		return FlightEventStatusEarly
+	case r < 92.3: // 15% - Delayed (minor issue)
+		return FlightEventStatusDelayed
+	case r < 95.3: // 3% - Arrived (rare)
+		return FlightEventStatusArrived
+	case r < 98.3: // 3% - Landed (rare)
+		return FlightEventStatusLanded
+	case r < 99.3: // 1% - Emergency (rare)
+		return FlightEventStatusEmergency
+	case r < 99.8: // 0.5% - Cancelled (very rare)
+		return FlightEventStatusCancelled
+	default: // 0.2% - Accident (extremely rare)
+		return FlightEventStatusAccident
+	}
 }
 
 // GetRandomLogLevel returns a random log level with weighted distribution
 func GetRandomLogLevel() LogLevel {
 	// Weighted distribution: more Info logs, fewer Fatal logs
-	weights := []int{5, 50, 25, 15, 5} // None, Info, Warning, Error, Fatal
-	total := 0
+	weights := []int32{5, 50, 25, 15, 5} // None, Info, Warning, Error, Fatal
+	var total int32 = 0
 	for _, w := range weights {
 		total += w
 	}
 
-	r := rand.Intn(total)
-	cumulative := 0
+	r := rand.Int32N(total)
+	var cumulative int32 = 0
 
 	levels := []LogLevel{
 		LogLevelNone,
@@ -94,11 +131,10 @@ func GetRandomLogLevel() LogLevel {
 }
 
 // GetRandomSystemInfo generates system info with smooth transitions for a specific aircraft
-func GetRandomSystemInfo(aircraftID int32) SystemInfo {
+func GetRandomSystemInfo(aircraftID int32, delay float64) SystemInfo {
 	aircraftSystemInfo.Lock()
 	defer aircraftSystemInfo.Unlock()
 
-	// Get or create state for this aircraft
 	state, exists := aircraftSystemInfo.data[aircraftID]
 	if !exists {
 		state = &SystemInfo{
@@ -132,15 +168,10 @@ func GetRandomSystemInfo(aircraftID int32) SystemInfo {
 	state.Disk = smoothChange(state.Disk, 30.0, 95.0, 0.1) // Disk changes slowly
 	state.Network = smoothChange(state.Network, 10.0, 150.0, 10.0)
 
-	// Battery decreases slowly over time (or stays at 100 if charging)
-	if rand.Float64() < 0.1 { // 10% chance of charging
-		state.Battery = math.Min(100.0, state.Battery+rand.Float64()*0.5)
-	} else {
-		state.Battery = math.Max(10.0, state.Battery-rand.Float64()*0.1)
-	}
+	// Battery decreases slowly over time
+	state.Battery = math.Max(0.0, state.Battery-rand.Float64()*0.1)
 
-	// Uptime increases
-	state.Uptime += 1.0 + rand.Float64()*2.0 // seconds
+	state.Uptime += delay // seconds
 
 	return SystemInfo{
 		CPU:     math.Round(state.CPU*100) / 100,
@@ -157,7 +188,6 @@ func GetRandomFlightEventData(flightID int32) FlightEventData {
 	flightPositions.Lock()
 	defer flightPositions.Unlock()
 
-	// Get or create state for this flight
 	state, exists := flightPositions.data[flightID]
 	if !exists {
 		state = &FlightEventData{
@@ -169,20 +199,17 @@ func GetRandomFlightEventData(flightID int32) FlightEventData {
 		flightPositions.data[flightID] = state
 	}
 
-	// Simulate realistic aircraft movement
 	// Speed changes gradually (acceleration/deceleration)
 	speedChange := (rand.Float64()*2 - 1) * 5.0 // +/- 5 km/h change
 	state.Speed += speedChange
 	state.Speed = math.Max(100.0, math.Min(400.0, state.Speed)) // Clamp between 100-400 km/h
 
-	// Altitude changes gradually (climb/descend)
 	// Aircraft typically climb/descend at 500-1500 feet per minute
 	// Converting to meters per update (assuming updates every few seconds)
 	altitudeChange := (rand.Float64()*2 - 1) * 15.0 // +/- 15 meters per update
 	state.Altitude += altitudeChange
 	state.Altitude = math.Max(100.0, math.Min(12000.0, state.Altitude)) // Clamp between 100-12000 meters
 
-	// Position change based on speed
 	// Assuming update every ~2 seconds, speed in km/h
 	// Distance = speed * time / 3600 (convert to km)
 	// 1 degree latitude ≈ 111 km, 1 degree longitude ≈ 111 km * cos(latitude)
@@ -207,10 +234,11 @@ func GetRandomFlightEventData(flightID int32) FlightEventData {
 
 	// Round values for output
 	return FlightEventData{
-		Speed:     math.Round(state.Speed*100) / 100,
-		Latitude:  math.Round(state.Latitude*1000000) / 1000000,  // 6 decimal places
-		Longitude: math.Round(state.Longitude*1000000) / 1000000, // 6 decimal places
-		Altitude:  math.Round(state.Altitude*100) / 100,
+		Speed:       math.Round(state.Speed*100) / 100,
+		Latitude:    math.Round(state.Latitude*1000000) / 1000000,  // 6 decimal places
+		Longitude:   math.Round(state.Longitude*1000000) / 1000000, // 6 decimal places
+		Altitude:    math.Round(state.Altitude*100) / 100,
+		EventStatus: GetRandomFlightEventStatus(),
 	}
 }
 
@@ -220,13 +248,54 @@ type RunningFlightsData struct {
 }
 
 // GetRandomFlightEvent generates a complete flight event for a given flight
-func GetRandomFlightEvent(data *RunningFlightsData) FlightEvent {
+func GetRandomFlightEvent(data *RunningFlightsData, delay float64) FlightEvent {
 	return FlightEvent{
 		FlightID:   data.FlightID,
 		AircraftID: data.AircraftID,
 		Timestamp:  time.Now(),
-		LogLevel:   GetRandomLogLevel(),
-		SystemInfo: GetRandomSystemInfo(data.AircraftID),
+		SystemInfo: GetRandomSystemInfo(data.AircraftID, delay),
 		EventData:  GetRandomFlightEventData(data.FlightID),
+	}
+}
+
+func ScheduleRandomNewFlights(wg *sync.WaitGroup, delay time.Duration) {
+	defer wg.Done()
+
+	for {
+		pgConn, err := GetPostgresDB()
+		if err != nil {
+			continue
+		}
+
+		ctx := context.Background()
+
+		queries := New(pgConn)
+		flightsData, err := queries.GetCompletedOrFailedFlightIds(ctx, GetCompletedOrFailedFlightIdsParams{
+			FlightStatus:   FlightStatusCompleted,
+			FlightStatus_2: FlightStatusFailed,
+			Limit:          rand.Int32N(10), // 0-10 flights
+			Offset:         0,
+		})
+		if err != nil {
+			continue
+		}
+
+		for _, flightData := range flightsData {
+			if _, err := queries.CreateFlight(ctx, CreateFlightParams{
+				AircraftID:     flightData.AircraftID,
+				SourceLat:      gofakeit.Float32(),
+				SourceLon:      gofakeit.Float32(),
+				DestinationLat: gofakeit.Float32(),
+				DestinationLon: gofakeit.Float32(),
+				StartTime:      pgtype.Timestamp{Time: time.Now(), Valid: true},
+				EndTime:        pgtype.Timestamp{Time: time.Now().Add(time.Minute * 5), Valid: true}, // 10 seconds from now
+				FlightStatus:   FlightStatusInFlight,
+			}); err != nil {
+				continue
+			}
+		}
+
+		log.Printf("scheduled %d new flights\n", len(flightsData))
+		time.Sleep(delay)
 	}
 }

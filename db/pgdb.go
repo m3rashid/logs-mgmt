@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"math/rand/v2"
 	"os"
 	"time"
@@ -43,7 +44,7 @@ func getPostgresDbConnection() (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-func CreateSeedData(ctx context.Context, count int) error {
+func CreateSeedData(ctx context.Context, count int32) error {
 	pgConn, err := GetPostgresDB()
 	if err != nil {
 		return err
@@ -68,6 +69,8 @@ func CreateSeedData(ctx context.Context, count int) error {
 
 	fmt.Println("Seeding database...")
 
+	var flightsCreated int32 = 0
+
 	// create count number of aircrafts with random data
 	for range count {
 		aircraftId, err := queries.CreateAircraft(ctx, CreateAircraftParams{
@@ -75,7 +78,7 @@ func CreateSeedData(ctx context.Context, count int) error {
 			Model:               gofakeit.CarModel(),
 			SerialNumber:        gofakeit.Person().CreditCard.Number,
 			BatteryHealth:       rand.Int32N(101),
-			Status:              GetRandomStatus(),
+			AircraftStatus:      GetRandomAircraftStatus(),
 			LastMaintenanceDate: pgtype.Timestamp{Time: time.Now(), Valid: true},
 			MaintenanceDueDate:  pgtype.Timestamp{Time: time.Now().Add(time.Hour * 24 * 30), Valid: true}, // 30 days from now
 		})
@@ -86,7 +89,7 @@ func CreateSeedData(ctx context.Context, count int) error {
 		const FLIGHT_PROBABILITY = 0.25 // 25%
 
 		if rand.Float64() < FLIGHT_PROBABILITY { // FLIGHT_PROBABILITY chance to create a flight for the aircraft
-			_, err := queries.CreateFlight(ctx, CreateFlightParams{
+			if _, err := queries.CreateFlight(ctx, CreateFlightParams{
 				AircraftID:     aircraftId,
 				SourceLat:      gofakeit.Float32(),
 				SourceLon:      gofakeit.Float32(),
@@ -94,16 +97,18 @@ func CreateSeedData(ctx context.Context, count int) error {
 				DestinationLon: gofakeit.Float32(),
 				StartTime:      pgtype.Timestamp{Time: time.Now(), Valid: true},
 				EndTime:        pgtype.Timestamp{Time: time.Now().Add(time.Hour * 24 * 30), Valid: true}, // 30 days from now
-				Status:         GetRandomFlightStatus(),
-			})
-			if err != nil {
+				FlightStatus:   GetRandomFlightStatus(),
+			}); err != nil {
 				return err
 			}
+			flightsCreated++
 		}
+
 	}
 
-	err = queries.SetDbSeeded(ctx)
-	if err != nil {
+	log.Printf("Seeded initial data: %d aircrafts and %d flights\n", count, flightsCreated)
+
+	if err = queries.SetDbSeeded(ctx); err != nil {
 		return err
 	}
 

@@ -7,29 +7,29 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type AircraftStatus int
+type AircraftStatus int32
 
 const (
-	AircraftStatusInactive AircraftStatus = iota
+	AircraftStatusInactive AircraftStatus = iota + 1
 	AircraftStatusActive
 	AircraftStatusMaintenance
 )
 
 type Position = [2]float64 // [latitude, longitude]
 
-type FlightStatus int
+type FlightStatus int32
 
 const (
-	FlightStatusScheduled FlightStatus = iota
+	FlightStatusScheduled FlightStatus = iota + 1
 	FlightStatusInFlight
 	FlightStatusCompleted
 	FlightStatusFailed
 )
 
-type LogLevel int
+type LogLevel int32
 
 const (
-	LogLevelNone LogLevel = iota
+	LogLevelNone LogLevel = iota + 1
 	LogLevelInfo
 	LogLevelWarning
 	LogLevelError
@@ -45,11 +45,40 @@ type SystemInfo struct {
 	Uptime  float64 `json:"uptime" bson:"up"`
 }
 
+type FlightEventStatus int32
+
+const (
+	FlightEventStatusEarly FlightEventStatus = iota + 1
+	FlightEventStatusOnTime
+	FlightEventStatusDeparted
+	FlightEventStatusArrived
+	FlightEventStatusLanded
+	FlightEventStatusDelayed
+	FlightEventStatusEmergency
+	FlightEventStatusCancelled
+	FlightEventStatusAccident
+)
+
+func (f FlightEventStatus) String() string {
+	return []string{
+		"Early",
+		"On Time",
+		"Departed",
+		"Arrived",
+		"Landed",
+		"Delayed",
+		"Cancelled",
+		"Emergency",
+		"Accident",
+	}[f-1] // Subtract 1 to convert to 0-based index
+}
+
 type FlightEventData struct {
-	Speed     float64 `json:"speed" bson:"speed"`
-	Latitude  float64 `json:"lat" bson:"lat"`
-	Longitude float64 `json:"lon" bson:"lon"`
-	Altitude  float64 `json:"alt" bson:"alt"`
+	Speed       float64           `json:"speed" bson:"speed"`
+	Latitude    float64           `json:"lat" bson:"lat"`
+	Longitude   float64           `json:"lon" bson:"lon"`
+	Altitude    float64           `json:"alt" bson:"alt"`
+	EventStatus FlightEventStatus `json:"status" bson:"status"`
 }
 
 type FlightEvent struct {

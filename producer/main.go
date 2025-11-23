@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"logs-mgmt/db"
 	"os"
 	"sync"
@@ -29,8 +30,13 @@ func generateFakeEvents(producer *kafka.Producer, wg *sync.WaitGroup) {
 		runningFlightsData = runningFlights.Data
 		runningFlights.Mutex.RUnlock()
 
+		if len(runningFlightsData) == 0 {
+			time.Sleep(10 * time.Second)
+			continue
+		}
+
 		for _, flight := range runningFlightsData {
-			flightEvent := db.GetRandomFlightEvent(&flight)
+			flightEvent := db.GetRandomFlightEvent(&flight, DELAY.Seconds())
 
 			producer.Produce(&kafka.Message{
 				Value:          flightEvent.ToByteArray(),
@@ -38,7 +44,7 @@ func generateFakeEvents(producer *kafka.Producer, wg *sync.WaitGroup) {
 			}, nil)
 		}
 
-		fmt.Printf("[%s] generated %d flight events\n", time.Now().Format("2006-01-02 15:04:05"), len(runningFlightsData))
+		log.Printf("generated %d flight events\n", len(runningFlightsData))
 
 		time.Sleep(DELAY)
 	}
@@ -56,7 +62,7 @@ func main() {
 
 	if *seed {
 		ctx := context.Background()
-		err := db.CreateSeedData(ctx, 500) // create 500 aircrafts and some flights
+		err := db.CreateSeedData(ctx, 5000) // create 5000 aircrafts and some flights
 		if err != nil {
 			fmt.Printf("Failed to seed database: %s\n", err)
 			os.Exit(1)
@@ -75,11 +81,14 @@ func main() {
 
 	wg := sync.WaitGroup{}
 
+	wg.Add(1)
 	go syncDataPerioically(&wg)
-	wg.Add(1)
 
-	go generateFakeEvents(producer, &wg)
 	wg.Add(1)
+	go generateFakeEvents(producer, &wg)
+
+	wg.Add(1)
+	go db.ScheduleRandomNewFlights(&wg, 5*time.Second)
 
 	wg.Wait()
 }

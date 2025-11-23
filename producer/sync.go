@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"logs-mgmt/db"
 	"sync"
 	"time"
 )
 
-const SYNC_INTERVAL = 10 * time.Second
+const SYNC_INTERVAL = 2 * time.Second
 
 type RunningFlights struct {
 	Data  []db.RunningFlightsData
@@ -24,9 +25,6 @@ func syncDataPerioically(wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	for {
-		fmt.Printf("[%s] syncing data periodically\n", time.Now().Format("15:04:05"))
-
-		// get all the flightIds from the database
 		pgConn, err := db.GetPostgresDB()
 		if err != nil {
 			fmt.Println("Error getting postgres db:", err)
@@ -40,8 +38,6 @@ func syncDataPerioically(wg *sync.WaitGroup) {
 			continue
 		}
 
-		fmt.Println("Running flights:", flights)
-
 		cleanedFlights := []db.RunningFlightsData{}
 		for _, flight := range flights {
 			cleanedFlights = append(cleanedFlights, db.RunningFlightsData{
@@ -54,7 +50,7 @@ func syncDataPerioically(wg *sync.WaitGroup) {
 		runningFlights.Data = cleanedFlights
 		runningFlights.Mutex.Unlock()
 
-		fmt.Printf("[%s] total running flights: %d\n", time.Now().Format("15:04:05"), len(runningFlights.Data))
+		log.Printf("syncing data periodically. Total running flights: %d\n", len(runningFlights.Data))
 		time.Sleep(SYNC_INTERVAL)
 	}
 }

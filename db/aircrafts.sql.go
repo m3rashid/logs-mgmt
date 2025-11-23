@@ -17,7 +17,7 @@ INSERT INTO aircrafts (
 	model,
 	serial_number,
 	battery_health,
-	status,
+	aircraft_status,
 	last_maintenance_date,
 	maintenance_due_date
 ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id
@@ -28,7 +28,7 @@ type CreateAircraftParams struct {
 	Model               string           `json:"model"`
 	SerialNumber        string           `json:"serial_number"`
 	BatteryHealth       int32            `json:"battery_health"`
-	Status              AircraftStatus   `json:"status"`
+	AircraftStatus      AircraftStatus   `json:"aircraft_status"`
 	LastMaintenanceDate pgtype.Timestamp `json:"last_maintenance_date"`
 	MaintenanceDueDate  pgtype.Timestamp `json:"maintenance_due_date"`
 }
@@ -39,7 +39,7 @@ func (q *Queries) CreateAircraft(ctx context.Context, arg CreateAircraftParams) 
 		arg.Model,
 		arg.SerialNumber,
 		arg.BatteryHealth,
-		arg.Status,
+		arg.AircraftStatus,
 		arg.LastMaintenanceDate,
 		arg.MaintenanceDueDate,
 	)
@@ -49,7 +49,7 @@ func (q *Queries) CreateAircraft(ctx context.Context, arg CreateAircraftParams) 
 }
 
 const getAircraft = `-- name: GetAircraft :one
-SELECT id, name, model, serial_number, battery_health, status, last_maintenance_date, maintenance_due_date, created_at, updated_at FROM aircrafts WHERE id = $1 LIMIT 1
+SELECT id, name, model, serial_number, battery_health, aircraft_status, last_maintenance_date, maintenance_due_date, created_at, updated_at FROM aircrafts WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetAircraft(ctx context.Context, id int32) (Aircraft, error) {
@@ -61,7 +61,7 @@ func (q *Queries) GetAircraft(ctx context.Context, id int32) (Aircraft, error) {
 		&i.Model,
 		&i.SerialNumber,
 		&i.BatteryHealth,
-		&i.Status,
+		&i.AircraftStatus,
 		&i.LastMaintenanceDate,
 		&i.MaintenanceDueDate,
 		&i.CreatedAt,
@@ -71,16 +71,31 @@ func (q *Queries) GetAircraft(ctx context.Context, id int32) (Aircraft, error) {
 }
 
 const getAircrafts = `-- name: GetAircrafts :many
-SELECT id, name, model, serial_number, battery_health, status, last_maintenance_date, maintenance_due_date, created_at, updated_at FROM aircrafts ORDER BY id DESC LIMIT $1 OFFSET $2
+SELECT id, name, model, serial_number, battery_health, aircraft_status, last_maintenance_date, maintenance_due_date, created_at, updated_at FROM aircrafts
+WHERE
+  ($3::text IS NULL OR model = $3)
+  AND ($4::text IS NULL OR serial_number = $4)
+  AND ($5::integer IS NULL OR battery_health >= $5)
+ORDER BY id DESC
+LIMIT $1 OFFSET $2
 `
 
 type GetAircraftsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Limit        int32   `json:"limit"`
+	Offset       int32   `json:"offset"`
+	Model        *string `json:"model"`
+	SerialNumber *string `json:"serial_number"`
+	MinBattery   *int32  `json:"min_battery"`
 }
 
 func (q *Queries) GetAircrafts(ctx context.Context, arg GetAircraftsParams) ([]Aircraft, error) {
-	rows, err := q.db.Query(ctx, getAircrafts, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, getAircrafts,
+		arg.Limit,
+		arg.Offset,
+		arg.Model,
+		arg.SerialNumber,
+		arg.MinBattery,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +109,7 @@ func (q *Queries) GetAircrafts(ctx context.Context, arg GetAircraftsParams) ([]A
 			&i.Model,
 			&i.SerialNumber,
 			&i.BatteryHealth,
-			&i.Status,
+			&i.AircraftStatus,
 			&i.LastMaintenanceDate,
 			&i.MaintenanceDueDate,
 			&i.CreatedAt,

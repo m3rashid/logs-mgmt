@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"log"
 	"logs-mgmt/db"
 	"logs-mgmt/server/utils"
 	"net/http"
@@ -11,9 +12,34 @@ import (
 
 func GetFlights(w http.ResponseWriter, r *http.Request) {
 	paginationRes := utils.PaginationResponse[db.Flight]{}
-	if err := paginationRes.ParseQuery(r, 50); err != nil {
+
+	query := &GetAllFlightQuery{}
+	if err := paginationRes.ParseQueryWithParams(r, 50, query); err != nil {
 		http.Error(w, "Incorrect Parameters", http.StatusBadRequest)
 		return
+	}
+
+	searchParams := db.GetFlightsParams{
+		Limit:  paginationRes.Limit + 1,
+		Offset: (paginationRes.CurrentPage - 1) * paginationRes.Limit,
+	}
+
+	if query.FlightStatus != 0 {
+		searchParams.FlightStatus = query.FlightStatus
+	}
+
+	if query.StartDate != "" {
+		startDate, err := utils.ParseTimestamp(query.StartDate)
+		if err == nil {
+			searchParams.StartDate = startDate
+		}
+	}
+
+	if query.EndDate != "" {
+		endDate, err := utils.ParseTimestamp(query.EndDate)
+		if err == nil {
+			searchParams.EndDate = endDate
+		}
 	}
 
 	pgConn, err := db.GetPostgresDB()
@@ -23,11 +49,9 @@ func GetFlights(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queries := db.New(pgConn)
-	flights, err := queries.GetFlights(r.Context(), db.GetFlightsParams{
-		Limit:  paginationRes.Limit + 1,
-		Offset: (paginationRes.CurrentPage - 1) * paginationRes.Limit,
-	})
+	flights, err := queries.GetFlights(r.Context(), searchParams)
 	if err != nil {
+		log.Println("Error getting flights", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -91,7 +115,7 @@ func CreateFlight(w http.ResponseWriter, r *http.Request) {
 		DestinationLon: body.DestinationLon,
 		StartTime:      pgtype.Timestamp{Time: body.StartTime, Valid: true},
 		EndTime:        pgtype.Timestamp{Time: body.EndTime, Valid: true},
-		Status:         db.FlightStatusScheduled,
+		FlightStatus:   db.FlightStatusScheduled,
 	})
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -134,9 +158,9 @@ func UpdateFlight(w http.ResponseWriter, r *http.Request) {
 
 	queries := db.New(pgConn)
 	flight, err := queries.UpdateFlight(r.Context(), db.UpdateFlightParams{
-		ID:      id,
-		Status:  body.Status,
-		EndTime: pgtype.Timestamp{Time: body.EndTime, Valid: true},
+		ID:           id,
+		FlightStatus: body.FlightStatus,
+		EndTime:      pgtype.Timestamp{Time: body.EndTime, Valid: true},
 	})
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

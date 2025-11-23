@@ -15,7 +15,7 @@ export function NewAircraft() {
     model: '',
     serial_number: '',
     battery_health: 100,
-    status: 1, // Active by default
+    aircraft_status: 1, // Active by default
   })
 
   const [errors, setErrors] = createSignal<Partial<Record<keyof CreateAircraftInput, string>>>({})
@@ -102,8 +102,8 @@ export function NewAircraft() {
 
           <Select
             label='Status'
-            value={formData().status.toString()}
-            onChange={(e) => updateField('status', parseInt(e.currentTarget.value) as AircraftStatus)}
+            value={formData().aircraft_status.toString()}
+            onChange={(e) => updateField('aircraft_status', parseInt(e.currentTarget.value) as AircraftStatus)}
             options={[
               { value: '0', label: 'Inactive' },
               { value: '1', label: 'Active' },

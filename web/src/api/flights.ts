@@ -8,7 +8,7 @@ export const useFlightsQuery = (params: Accessor<PaginationRequestParams>) => {
     queryKey: ['flights', params()] as const,
     queryFn: () => {
       const { page, limit } = params()
-      return apiClient<PaginationResponse<Flight>>(`/api/flights?page=${page}&limit=${limit}`)
+      return apiClient<PaginationResponse<Flight>>(`/api/flights?page=${page}&limit=${limit}&status=2`)
     },
   }))
 }
@@ -36,10 +36,7 @@ export const useCreateFlightMutation = (options?: { onSuccess?: () => void; onEr
   }))
 }
 
-export type UpdateFlightInput = {
-  status?: FlightStatus
-  end_time?: Date
-}
+export type UpdateFlightInput = { flight_status?: FlightStatus; end_time?: Date }
 export const useUpdateFlightMutation = (options?: { onSuccess?: () => void; onError?: (error: Error) => void }) => {
   const queryClient = useQueryClient()
 
@@ -57,5 +54,5 @@ export const useUpdateFlightMutation = (options?: { onSuccess?: () => void; onEr
 }
 
 export function getFlightRealtime() {
-  return new EventSource(`${baseUrl}/api/flights/realtime`)
+  return new EventSource(`${baseUrl}/api/events/flights`)
 }
