@@ -1,4 +1,4 @@
-import { Router, Route, Navigate } from '@solidjs/router'
+import { Router, Route } from '@solidjs/router'
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
 import { Flights } from './pages/Flights'
 import { Aircrafts } from './pages/Aircrafts'
@@ -20,8 +20,7 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <Route path='/' component={() => <Navigate href='/flights' />} />
-        <Route path='/flights' component={Flights} />
+        <Route path='/' component={Flights} />
         <Route path='/aircrafts' component={Aircrafts} />
         <Route path='/new-aircraft' component={NewAircraft} />
         <Route path='/new-flight' component={NewFlight} />

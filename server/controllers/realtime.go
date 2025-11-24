@@ -33,6 +33,7 @@ func getFlightDetailsRealtime() ([]byte, error) {
 		{"$sort": bson.M{"time": 1}},
 		{"$group": bson.M{"_id": "$flight_id", "event": bson.M{"$last": "$$ROOT"}}},
 		{"$replaceRoot": bson.M{"newRoot": "$event"}},
+		{"$sort": bson.M{"flight_id": 1}},
 	}
 
 	mongoConn, err := db.GetMongoDB()

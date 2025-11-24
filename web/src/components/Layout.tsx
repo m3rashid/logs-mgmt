@@ -11,14 +11,13 @@ export function Layout(props: Readonly<{ children: JSX.Element }>) {
               <A href='/' class='text-lg font-bold text-gray-900'>
                 Flight Management
               </A>
-              <div class='flex gap-4'>
-                <NavLink href='/'>Flights</NavLink>
-                <NavLink href='/aircrafts'>Aircrafts</NavLink>
-              </div>
+
+              <NavLink href='/aircrafts'>Aircrafts</NavLink>
             </div>
           </div>
         </div>
       </nav>
+
       <main class='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'>{props.children}</main>
     </div>
   )
@@ -28,8 +27,8 @@ function NavLink(props: { href: string; children: JSX.Element }) {
   return (
     <A
       href={props.href}
-      class='text-sm text-gray-600 hover:text-gray-900 transition-colors'
       activeClass='text-blue-600 font-medium'
+      class='text-sm text-gray-600 hover:text-gray-900 transition-colors'
     >
       {props.children}
     </A>
