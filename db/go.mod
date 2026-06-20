@@ -6,7 +6,7 @@ require (
 	github.com/brianvoe/gofakeit/v7 v7.9.0
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/lib/pq v1.10.9
-	go.mongodb.org/mongo-driver v1.17.6
+	go.mongodb.org/mongo-driver v1.17.7
 )
 
 require (
