@@ -1,16 +1,24 @@
 # Logs Management System
 
-Simulated flight logs pipeline.
+Simulated flight-logs pipeline: a producer generates fake flight events, a Kafka-backed consumer buffers and persists them to MongoDB, and a web app serves flights/events in real time.
 
 ## Components
 
-- **Producer** — generates fake flight logs, seeds DB, appends flights on interval
-- **Consumer** — consumes Kafka topic, buffers writes to MongoDB, updates flight state
-- **Server** — flights table, per-flight events via SSE, aircrafts table
+- **Producer** — seeds initial fake data; appends new flights on an interval
+- **Consumer** — consumes Kafka topic; batched writes to MongoDB; updates flight state (landed/arrived/cancelled)
+- **Server/Web** — flights table, per-flight event stream via SSE, aircrafts table
 
 ## Tech
 
-Go · Kafka · MongoDB · Docker
+Go · Kafka · MongoDB · Postgres (sqlc) · Docker
+
+## Quick start
+
+```bash
+git clone https://github.com/m3rashid/logs-mgmt.git
+cd logs-mgmt
+docker compose up
+```
 
 ## License
 
